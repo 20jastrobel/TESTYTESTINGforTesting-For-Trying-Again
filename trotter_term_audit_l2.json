@@ -1,0 +1,508 @@
+{
+  "generated_utc": "2026-02-13T06:06:31.669031+00:00",
+  "scope": "L2 hardcoded-vs-baseline trotter order/sign/qubit-mapping audit",
+  "locked_settings": {
+    "num_sites": 2,
+    "hopping_t": 1.0,
+    "onsite_u": 4.0,
+    "dv": 0.0,
+    "boundary": "periodic",
+    "ordering": "blocked",
+    "t_final": 20.0,
+    "num_times": 401,
+    "suzuki_order": 2,
+    "trotter_steps": 128,
+    "initial_state": "vqe_uccsd",
+    "initial_state_label_qn_to_q0": null,
+    "initial_state_amplitudes_qn_to_q0": {
+      "0101": {
+        "re": -0.27060718521273797,
+        "im": 0.0
+      },
+      "0110": {
+        "re": -0.6533087965121612,
+        "im": 0.0
+      },
+      "1001": {
+        "re": -0.653254784072596,
+        "im": 0.0
+      },
+      "1010": {
+        "re": -0.2705874254235338,
+        "im": 0.0
+      }
+    }
+  },
+  "legacy_modes_used_iter0": {
+    "num_sites": 2,
+    "hopping_t": 1.0,
+    "onsite_u": 4.0,
+    "dv": 0.0,
+    "boundary": "periodic",
+    "ordering": "blocked",
+    "t_final": 20.0,
+    "num_times": 401,
+    "suzuki_order": 2,
+    "trotter_steps": 128,
+    "initial_state_mode": "hardcoded_vqe",
+    "term_order_mode": "legacy_sorted_hardcoded",
+    "time_semantics_mode": "legacy_incremental_fixed_reps"
+  },
+  "diagnostic_a_baseline_initial_amplitudes_legacy_modes": {
+    "mismatch_reduction_per_metric": {
+      "fidelity": true,
+      "energy_trotter": true,
+      "n_up_site0_trotter": true,
+      "n_dn_site0_trotter": true,
+      "doublon_trotter": true
+    },
+    "iter0_max_abs_deltas": {
+      "fidelity": 0.0005667876930742777,
+      "energy_trotter": 0.0032060446409131194,
+      "n_up_site0_trotter": 2.973383951487829e-05,
+      "n_dn_site0_trotter": 2.8432372378150994e-05,
+      "doublon_trotter": 0.01642592978437013
+    },
+    "diag_a_max_abs_deltas": {
+      "fidelity": 0.0005667876930740556,
+      "energy_trotter": 0.003206042760604433,
+      "n_up_site0_trotter": 1.1901073515452332e-05,
+      "n_dn_site0_trotter": 1.2109529353376836e-05,
+      "doublon_trotter": 0.016425706273111684
+    }
+  },
+  "ordered_terms": {
+    "hardcoded_native_exyz_order": [
+      {
+        "label_exyz": "yyee",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "xxee",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eexx",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eeyy",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eeee",
+        "coeff": {
+          "re": 2.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "zeee",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eeze",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "zeze",
+        "coeff": {
+          "re": 1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "ezez",
+        "coeff": {
+          "re": 1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eeez",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "ezee",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      }
+    ],
+    "hardcoded_legacy_sorted_exyz_order": [
+      {
+        "label_exyz": "eeee",
+        "coeff": {
+          "re": 2.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eeez",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eexx",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eeyy",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "eeze",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "ezee",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "ezez",
+        "coeff": {
+          "re": 1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "xxee",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "yyee",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "zeee",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_exyz": "zeze",
+        "coeff": {
+          "re": 1.0,
+          "im": 0.0
+        }
+      }
+    ],
+    "qiskit_to_list_ixyz_order": [
+      {
+        "label_ixyz": "IIII",
+        "coeff": {
+          "re": 2.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIYY",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIXX",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "YYII",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "XXII",
+        "coeff": {
+          "re": -0.5,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IZII",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIIZ",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IZIZ",
+        "coeff": {
+          "re": 1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "ZIII",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIZI",
+        "coeff": {
+          "re": -1.0,
+          "im": 0.0
+        }
+      },
+      {
+        "label_ixyz": "ZIZI",
+        "coeff": {
+          "re": 1.0,
+          "im": 0.0
+        }
+      }
+    ]
+  },
+  "coefficient_audit": {
+    "num_terms_hardcoded": 11,
+    "num_terms_qiskit": 11,
+    "num_terms_union": 11,
+    "max_abs_coeff_delta": 0.0,
+    "rows": [
+      {
+        "label_ixyz": "IIII",
+        "hardcoded_coeff": {
+          "re": 2.0,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": 2.0,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIIZ",
+        "hardcoded_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIXX",
+        "hardcoded_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIYY",
+        "hardcoded_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IIZI",
+        "hardcoded_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IZII",
+        "hardcoded_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "IZIZ",
+        "hardcoded_coeff": {
+          "re": 1.0,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": 1.0,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "XXII",
+        "hardcoded_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "YYII",
+        "hardcoded_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -0.5,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "ZIII",
+        "hardcoded_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": -1.0,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      },
+      {
+        "label_ixyz": "ZIZI",
+        "hardcoded_coeff": {
+          "re": 1.0,
+          "im": 0.0
+        },
+        "qiskit_coeff": {
+          "re": 1.0,
+          "im": 0.0
+        },
+        "delta": {
+          "re": 0.0,
+          "im": 0.0,
+          "abs": 0.0
+        }
+      }
+    ]
+  },
+  "qubit_index_mapping_notes": {
+    "pauli_string_order": "left-to-right = q_(n-1)...q_0 (qubit 0 is rightmost char)",
+    "blocked_mode_map_l2": {
+      "up_site0_qubit": 0,
+      "up_site1_qubit": 1,
+      "dn_site0_qubit": 2,
+      "dn_site1_qubit": 3
+    },
+    "number_operator_convention": "n_p = (I - Z_p)/2",
+    "suzuki_order2_step_used": "forward half-step over ordered term list then reverse half-step"
+  }
+}
