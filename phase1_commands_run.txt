@@ -1100,3 +1100,110 @@ print("all_pass",s["all_pass"])
 for row in s["results"]:
     print("L",row["lattice_size"],"pass",row["pass"]) 
 PY
+rg -n "qpe|hpe|E_from_qpe|E_hpe|prior_qiskit|qiskit.*qpe|qiskit.*hpe|segment2_qpe|segment3_hpe" -S Tests pydephasing
+python - <<"PY"
+import json
+from pathlib import Path
+paths=[
+"pydephasing/quantum/exports/qpe_hardcoded_vs_prior_qiskit_L2_L3.json",
+"Tests/qpe_hardcoded_vs_prior_qiskit_L2_L3_barplot.png",
+"pydephasing/quantum/exports/qpe_hardcoded_sector_run_L2_blocked.json",
+"pydephasing/quantum/exports/qpe_hardcoded_sector_run_L3_blocked.json",
+"pydephasing/quantum/exports/qpe_hardcoded_sector_run_L4_blocked.json",
+]
+for p in paths:
+    pp=Path(p)
+    print(p, pp.exists())
+if Path(paths[0]).exists():
+    obj=json.loads(Path(paths[0]).read_text())
+    print(top
+pwd -P
+ls -1
+rg --files Tests | head -n 60
+rg -n "def _write_vqe_comparison_page|def _write_notes|QPE|HPE|PdfPages|overall|bundle|merge" Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py
+sed -n "260,620p" Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py
+sed -n "1,260p" Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py
+sed -n "620,980p" Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py
+rg -n "all_results_bundle|PdfWriter|merge|overall_summary|notes" -S Tests *.py . | head -n 80
+rg -n "hardcoded_vs_qiskit_all_results_bundle|PdfWriter|append\(|PdfMerger|overall summary" -S --glob "*.py"
+ls -1 Tests | rg -n "pdf|merge|summary|overall|bundle" -n
+sed -n "1,260p" pydephasing/quantum/exports/qpe_hardcoded_vs_prior_qiskit_L2_L3.json
+sed -n "1,260p" pydephasing/quantum/exports/qpe_hardcoded_sector_run_L2_blocked.json
+sed -n "1,260p" pydephasing/quantum/exports/qpe_hardcoded_sector_run_L4_blocked.json
+rg --files | rg "qpe_run_summary|qpe.*summary|prior_qiskit|hpe"
+rg -n "qpe_run_summary_L|qpe_hardcoded_vs_prior_qiskit|segment2_E_qpe_delta|prior_values" -S Tests pydephasing | head -n 120
+rg -n "E_qpe|E_hpe|prior_values|L4" pydephasing/quantum/exports -S
+rg -n "hardcoded_vs_qiskit_l2_l4_overall_summary\.pdf|overall_summary|all_results_bundle" -S .
+sed -n "880,1065p" phase1_commands_run.txt
+python -m py_compile Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py
+python Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py
+python - <<"PY"
+import pypdf
+for f in [
+    "hardcoded_vs_qiskit_l3_time_dynamics_report.pdf",
+    "hardcoded_vs_qiskit_l4_time_dynamics_report.pdf",
+    "hardcoded_vs_qiskit_vqe_energy_comparison.pdf",
+]:
+    r=pypdf.PdfReader(f)
+    print(f, "pages", len(r.pages))
+PY
+python - <<"PY"
+from pathlib import Path
+for f in [
+    "hardcoded_vs_qiskit_l3_time_dynamics_report.pdf",
+    "hardcoded_vs_qiskit_l4_time_dynamics_report.pdf",
+    "hardcoded_vs_qiskit_vqe_energy_comparison.pdf",
+]:
+    p=Path(f)
+    print(f, p.exists(), p.stat().st_size if p.exists() else -1)
+PY
+which pdfinfo || true
+pdfinfo hardcoded_vs_qiskit_all_results_bundle.pdf | head -n 20
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=hardcoded_vs_qiskit_all_results_bundle.pdf hardcoded_vs_qiskit_l2_match_final_report.pdf hardcoded_vs_qiskit_l3_time_dynamics_report.pdf hardcoded_vs_qiskit_l4_time_dynamics_report.pdf hardcoded_vs_qiskit_vqe_energy_comparison.pdf hardcoded_vs_qiskit_l2_l4_overall_summary.pdf
+pdfinfo hardcoded_vs_qiskit_vqe_energy_comparison.pdf | head -n 20
+ls -lh hardcoded_vs_qiskit_all_results_bundle.pdf hardcoded_vs_qiskit_vqe_energy_comparison.pdf hardcoded_vs_qiskit_l3_time_dynamics_report.pdf hardcoded_vs_qiskit_l4_time_dynamics_report.pdf
+mdls -name kMDItemNumberOfPages hardcoded_vs_qiskit_vqe_energy_comparison.pdf
+mdls -name kMDItemNumberOfPages hardcoded_vs_qiskit_l3_time_dynamics_report.pdf
+mdls -name kMDItemNumberOfPages hardcoded_vs_qiskit_l4_time_dynamics_report.pdf
+mdls -name kMDItemNumberOfPages hardcoded_vs_qiskit_all_results_bundle.pdf
+pwd -P
+ls -1 hardcoded_vs_qiskit_vqe_energy_comparison.pdf hardcoded_vs_qiskit_all_results_bundle.pdf
+mdls -name kMDItemNumberOfPages "$PWD/hardcoded_vs_qiskit_vqe_energy_comparison.pdf"
+mdls -name kMDItemNumberOfPages "$PWD/hardcoded_vs_qiskit_l3_time_dynamics_report.pdf"
+mdls -name kMDItemNumberOfPages "$PWD/hardcoded_vs_qiskit_l4_time_dynamics_report.pdf"
+mdls -name kMDItemNumberOfPages "$PWD/hardcoded_vs_qiskit_all_results_bundle.pdf"
+gs -q -dNODISPLAY -c "(hardcoded_vs_qiskit_vqe_energy_comparison.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNODISPLAY -c "(hardcoded_vs_qiskit_l3_time_dynamics_report.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNODISPLAY -c "(hardcoded_vs_qiskit_l4_time_dynamics_report.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNODISPLAY -c "(hardcoded_vs_qiskit_all_results_bundle.pdf) (r) file runpdfbegin pdfpagecount = quit"
+cat > /tmp/rebuild_summary_pdf.py <<'PY'
+python /tmp/rebuild_summary_pdf.py
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=hardcoded_vs_qiskit_all_results_bundle.pdf hardcoded_vs_qiskit_l2_match_final_report.pdf hardcoded_vs_qiskit_l3_time_dynamics_report.pdf hardcoded_vs_qiskit_l4_time_dynamics_report.pdf hardcoded_vs_qiskit_vqe_energy_comparison.pdf hardcoded_vs_qiskit_l2_l4_overall_summary.pdf
+ls -lh hardcoded_vs_qiskit_all_results_bundle.pdf hardcoded_vs_qiskit_l2_l4_overall_summary.pdf hardcoded_vs_qiskit_vqe_energy_comparison.pdf
+python - <<"PY"
+from pathlib import Path
+files=[
+"hardcoded_vs_qiskit_l3_time_dynamics_report.pdf",
+"hardcoded_vs_qiskit_l4_time_dynamics_report.pdf",
+"hardcoded_vs_qiskit_vqe_energy_comparison.pdf",
+"hardcoded_vs_qiskit_l2_l4_overall_summary.pdf",
+"hardcoded_vs_qiskit_all_results_bundle.pdf",
+]
+for f in files:
+    p=Path(f)
+    print(f, p.exists(), p.stat().st_size if p.exists() else -1)
+PY
+git status --short
+git diff -- Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py | sed -n "1,260p"
+gs -q -dNOSAFER -dNODISPLAY -c "(hardcoded_vs_qiskit_vqe_energy_comparison.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNOSAFER -dNODISPLAY -c "(hardcoded_vs_qiskit_l3_time_dynamics_report.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNOSAFER -dNODISPLAY -c "(hardcoded_vs_qiskit_l4_time_dynamics_report.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNOSAFER -dNODISPLAY -c "(hardcoded_vs_qiskit_l2_l4_overall_summary.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNOSAFER -dNODISPLAY -c "(hardcoded_vs_qiskit_all_results_bundle.pdf) (r) file runpdfbegin pdfpagecount = quit"
+gs -q -dNOSAFER -sDEVICE=txtwrite -o /tmp/vqe_pdf_text.txt hardcoded_vs_qiskit_vqe_energy_comparison.pdf
+rg -n "Qiskit QPE|Qiskit HPE|Hardcoded QPE|n/a|Interpretation notes" /tmp/vqe_pdf_text.txt | head -n 40
+gs -q -dNOSAFER -sDEVICE=txtwrite -o /tmp/l3_pdf_text.txt hardcoded_vs_qiskit_l3_time_dynamics_report.pdf
+gs -q -dNOSAFER -sDEVICE=txtwrite -o /tmp/l4_pdf_text.txt hardcoded_vs_qiskit_l4_time_dynamics_report.pdf
+rg -n "interpretation notes|Site-0 occupations|Delta diagnostics|phase overlay" /tmp/l3_pdf_text.txt | head -n 30
+rg -n "interpretation notes|Site-0 occupations|Delta diagnostics|phase overlay" /tmp/l4_pdf_text.txt | head -n 30
+rg -n "interpretation notes|qiskit_qpe|qiskit_hpe|Qiskit QPE/HPE n/a|Energy Comparison: VQE / QPE / HPE \(Hardcoded vs Qiskit\)" Tests/l3_l4_hardcoded_vs_qiskit_time_dynamics_pdf.py

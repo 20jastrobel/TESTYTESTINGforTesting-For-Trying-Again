@@ -581,12 +581,61 @@ def _write_pdf(
         pdf.savefig(fig3)
         plt.close(fig3)
 
+        # Interpretation page to make plot semantics explicit for future review.
+        fig4 = plt.figure(figsize=(11.0, 8.5))
+        ax4 = fig4.add_subplot(111)
+        ax4.axis("off")
+        notes = [
+            f"L={num_sites} interpretation notes",
+            "",
+            "1) 'exact' means exact state propagation exp(-i H t) from diagonalization.",
+            "   'qiskit exact' and 'hardcoded exact' use the same definition but each path's own H coefficients.",
+            "",
+            "2) Site-0 occupations show n_up(site0) and n_dn(site0).",
+            "   Each has four curves: qiskit exact, qiskit trotter, hardcoded exact, hardcoded trotter.",
+            "",
+            "3) Fidelity is F(t)=|<psi_exact(t)|psi_trotter(t)>|^2 within each path.",
+            "",
+            "4) Delta diagnostics are absolute errors:",
+            "   |qiskit trotter - qiskit exact| and |hardcoded trotter - hardcoded exact|.",
+            "",
+            "5) The phase overlay is an extra diagnostic: angle(<psi_exact_qiskit|psi_exact_hardcoded>).",
+            "   It does not redefine doublon; it is shown on a secondary y-axis.",
+        ]
+        ax4.text(0.02, 0.98, "\n".join(notes), va="top", ha="left", family="monospace", fontsize=10)
+        pdf.savefig(fig4)
+        plt.close(fig4)
+
 
 def _write_vqe_comparison_page(pdf_path: Path) -> None:
     rows: dict[int, dict[str, float | None]] = {
-        2: {"hardcoded_vqe": None, "qiskit_vqe": None, "exact": None, "qpe": None, "hpe": None},
-        3: {"hardcoded_vqe": None, "qiskit_vqe": None, "exact": None, "qpe": None, "hpe": None},
-        4: {"hardcoded_vqe": None, "qiskit_vqe": None, "exact": None, "qpe": None, "hpe": None},
+        2: {
+            "hardcoded_vqe": None,
+            "qiskit_vqe": None,
+            "exact": None,
+            "hardcoded_qpe": None,
+            "hardcoded_hpe": None,
+            "qiskit_qpe": None,
+            "qiskit_hpe": None,
+        },
+        3: {
+            "hardcoded_vqe": None,
+            "qiskit_vqe": None,
+            "exact": None,
+            "hardcoded_qpe": None,
+            "hardcoded_hpe": None,
+            "qiskit_qpe": None,
+            "qiskit_hpe": None,
+        },
+        4: {
+            "hardcoded_vqe": None,
+            "qiskit_vqe": None,
+            "exact": None,
+            "hardcoded_qpe": None,
+            "hardcoded_hpe": None,
+            "qiskit_qpe": None,
+            "qiskit_hpe": None,
+        },
     }
 
     # Qiskit VQE for L=2,3 from committed comparison.
@@ -612,10 +661,36 @@ def _write_vqe_comparison_page(pdf_path: Path) -> None:
             continue
         obj = json.loads(p.read_text())
         rows[L]["hardcoded_vqe"] = float(obj["reference"]["E_vqe"])
-        rows[L]["qpe"] = float(obj["segment2_qpe"]["E_from_qpe"])
-        rows[L]["hpe"] = float(obj["segment3_hpe"]["E_hpe"])
+        rows[L]["hardcoded_qpe"] = float(obj["segment2_qpe"]["E_from_qpe"])
+        rows[L]["hardcoded_hpe"] = float(obj["segment3_hpe"]["E_hpe"])
         if rows[L]["exact"] is None:
             rows[L]["exact"] = float(obj["reference"]["E_exact_sector"])
+
+    # Prior Qiskit QPE/HPE values are currently available for L=2 and L=3.
+    prior_cmp_paths = [
+        ROOT / "pydephasing" / "quantum" / "exports" / "qpe_hardcoded_vs_prior_qiskit_L2_L3.json",
+        ROOT / "Tests" / "quantum_test" / "exports" / "qpe_hardcoded_vs_prior_qiskit_L2_L3.json",
+    ]
+    prior_obj = None
+    for p in prior_cmp_paths:
+        if p.exists():
+            prior_obj = json.loads(p.read_text())
+            break
+    if isinstance(prior_obj, dict):
+        for lk, lv in prior_obj.items():
+            if not (isinstance(lk, str) and lk.startswith("L")):
+                continue
+            try:
+                L = int(lk[1:])
+            except ValueError:
+                continue
+            if L not in rows:
+                continue
+            prior_vals = lv.get("prior_values", {}) if isinstance(lv, dict) else {}
+            if "E_qpe" in prior_vals:
+                rows[L]["qiskit_qpe"] = float(prior_vals["E_qpe"])
+            if "E_hpe" in prior_vals:
+                rows[L]["qiskit_hpe"] = float(prior_vals["E_hpe"])
 
     Lvals = [2, 3, 4]
     x = np.arange(len(Lvals), dtype=float)
@@ -630,42 +705,72 @@ def _write_vqe_comparison_page(pdf_path: Path) -> None:
     exact = series("exact")
     hardcoded_vqe = series("hardcoded_vqe")
     qiskit_vqe = series("qiskit_vqe")
-    qpe = series("qpe")
-    hpe = series("hpe")
+    hardcoded_qpe = series("hardcoded_qpe")
+    hardcoded_hpe = series("hardcoded_hpe")
+    qiskit_qpe = series("qiskit_qpe")
+    qiskit_hpe = series("qiskit_hpe")
 
     with PdfPages(str(pdf_path)) as pdf:
         fig, ax = plt.subplots(figsize=(11.0, 8.5))
         ax.plot(x, exact, marker="X", markersize=9, linewidth=2.2, color="#111111", label="Exact")
         ax.plot(x, hardcoded_vqe, marker="s", markersize=7, linewidth=1.8, color="#2ca02c", label="Hardcoded VQE")
         ax.plot(x, qiskit_vqe, marker="o", markersize=7, linewidth=1.8, color="#ff7f0e", label="Qiskit VQE")
-        ax.plot(x, qpe, marker="^", markersize=7, linewidth=1.8, linestyle="--", color="#1f77b4", label="QPE")
-        ax.plot(x, hpe, marker="D", markersize=7, linewidth=1.8, linestyle="-.", color="#d62728", label="HPE")
+        ax.plot(
+            x, hardcoded_qpe, marker="^", markersize=7, linewidth=1.8, linestyle="--",
+            color="#1f77b4", label="Hardcoded QPE"
+        )
+        ax.plot(
+            x, qiskit_qpe, marker="P", markersize=7, linewidth=1.8, linestyle=":",
+            color="#0b3d91", label="Qiskit QPE"
+        )
+        ax.plot(
+            x, hardcoded_hpe, marker="D", markersize=7, linewidth=1.8, linestyle="-.",
+            color="#d62728", label="Hardcoded HPE"
+        )
+        ax.plot(
+            x, qiskit_hpe, marker="v", markersize=7, linewidth=1.8, linestyle=(0, (3, 1, 1, 1)),
+            color="#8c2d04", label="Qiskit HPE"
+        )
         ax.set_xticks(x)
         ax.set_xticklabels([f"L={L}" for L in Lvals])
         ax.set_ylabel("Energy")
-        ax.set_title("Energy Comparison: VQE / QPE / HPE vs Exact")
+        ax.set_title("Energy Comparison: VQE / QPE / HPE (Hardcoded vs Qiskit) vs Exact")
         ax.grid(alpha=0.25)
         ax.legend()
+        for i, L in enumerate(Lvals):
+            if math.isnan(qiskit_qpe[i]) or math.isnan(qiskit_hpe[i]):
+                ax.annotate(
+                    f"L={L}: Qiskit QPE/HPE n/a",
+                    (x[i], exact[i] if not math.isnan(exact[i]) else 0.0),
+                    textcoords="offset points",
+                    xytext=(8, -18),
+                    fontsize=8,
+                    color="#333333",
+                )
         pdf.savefig(fig)
         plt.close(fig)
 
         fig2, ax2 = plt.subplots(figsize=(11.0, 8.5))
         err_hc_vqe = np.abs(hardcoded_vqe - exact)
         err_qk_vqe = np.abs(qiskit_vqe - exact)
-        err_qpe = np.abs(qpe - exact)
-        err_hpe = np.abs(hpe - exact)
-        width = 0.18
-        ax2.bar(x - 1.5 * width, err_hc_vqe, width=width, color="#2ca02c", label="|Hardcoded VQE - Exact|")
-        ax2.bar(x - 0.5 * width, err_qk_vqe, width=width, color="#ff7f0e", label="|Qiskit VQE - Exact|")
-        ax2.bar(x + 0.5 * width, err_qpe, width=width, color="#1f77b4", label="|QPE - Exact|")
-        ax2.bar(x + 1.5 * width, err_hpe, width=width, color="#d62728", label="|HPE - Exact|")
+        err_hc_qpe = np.abs(hardcoded_qpe - exact)
+        err_qk_qpe = np.abs(qiskit_qpe - exact)
+        err_hc_hpe = np.abs(hardcoded_hpe - exact)
+        err_qk_hpe = np.abs(qiskit_hpe - exact)
+        width = 0.12
+        ax2.bar(x - 2.5 * width, err_hc_vqe, width=width, color="#2ca02c", label="|Hardcoded VQE - Exact|")
+        ax2.bar(x - 1.5 * width, err_qk_vqe, width=width, color="#ff7f0e", label="|Qiskit VQE - Exact|")
+        ax2.bar(x - 0.5 * width, err_hc_qpe, width=width, color="#1f77b4", label="|Hardcoded QPE - Exact|")
+        ax2.bar(x + 0.5 * width, err_qk_qpe, width=width, color="#0b3d91", label="|Qiskit QPE - Exact|")
+        ax2.bar(x + 1.5 * width, err_hc_hpe, width=width, color="#d62728", label="|Hardcoded HPE - Exact|")
+        ax2.bar(x + 2.5 * width, err_qk_hpe, width=width, color="#8c2d04", label="|Qiskit HPE - Exact|")
         ax2.set_xticks(x)
         ax2.set_xticklabels([f"L={L}" for L in Lvals])
         ax2.set_ylabel("Absolute Error")
         ax2.set_yscale("log")
         ax2.set_title("Absolute Error vs Exact (log scale)")
         ax2.grid(axis="y", alpha=0.25)
-        ax2.legend(fontsize=9)
+        ax2.legend(fontsize=8)
         pdf.savefig(fig2)
         plt.close(fig2)
 
@@ -675,18 +780,39 @@ def _write_vqe_comparison_page(pdf_path: Path) -> None:
         lines = [
             "Data table (energy values)",
             "",
-            "Columns: L, exact, hardcoded_vqe, qiskit_vqe, qpe, hpe",
+            "Columns: L, exact, hardcoded_vqe, qiskit_vqe, hardcoded_qpe, qiskit_qpe, hardcoded_hpe, qiskit_hpe",
             "",
         ]
         for L in Lvals:
             r = rows[L]
             lines.append(
                 f"L={L}  exact={r['exact']}  hardcoded_vqe={r['hardcoded_vqe']}  "
-                f"qiskit_vqe={r['qiskit_vqe']}  qpe={r['qpe']}  hpe={r['hpe']}"
+                f"qiskit_vqe={r['qiskit_vqe']}  hardcoded_qpe={r['hardcoded_qpe']}  "
+                f"qiskit_qpe={r['qiskit_qpe']}  hardcoded_hpe={r['hardcoded_hpe']}  "
+                f"qiskit_hpe={r['qiskit_hpe']}"
             )
         ax3.text(0.02, 0.98, "\n".join(lines), va="top", ha="left", family="monospace", fontsize=10)
         pdf.savefig(fig3)
         plt.close(fig3)
+
+        fig4 = plt.figure(figsize=(11.0, 8.5))
+        ax4 = fig4.add_subplot(111)
+        ax4.axis("off")
+        notes = [
+            "Interpretation notes",
+            "",
+            "1) 'Exact' is exact filtered-sector energy from diagonalization of the same model settings.",
+            "",
+            "2) QPE/HPE are plotted separately for hardcoded and prior Qiskit when available.",
+            "   Current repository artifact has prior Qiskit QPE/HPE for L=2 and L=3 only.",
+            "   L=4 Qiskit QPE/HPE is marked n/a in this report.",
+            "",
+            "3) Time-dynamics pages use exact vs trotter traces per implementation.",
+            "   'Trotter-vs-Exact' plots are absolute self-error diagnostics, not cross-implementation deltas.",
+        ]
+        ax4.text(0.02, 0.98, "\n".join(notes), va="top", ha="left", family="monospace", fontsize=10)
+        pdf.savefig(fig4)
+        plt.close(fig4)
 
 
 def run_for_lattice(num_sites: int) -> dict[str, Any]:

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-02-13T06:34:25.882754+00:00",
+  "generated_utc": "2026-02-13T06:52:34.630163+00:00",
   "description": "L=3/L=4 hardcoded-vs-Qiskit time-dynamics comparison with locked phase-1 settings and PDF trajectory reports.",
   "settings": {
     "hopping_t": 1.0,
