@@ -1,0 +1,153 @@
+{
+  "generated_utc": "2026-02-13T23:28:14.857356+00:00",
+  "description": "Hardcoded-first vs Qiskit Hubbard pipeline comparison.",
+  "l_values": [
+    2,
+    3
+  ],
+  "thresholds": {
+    "ground_state_energy_abs_delta": 1e-08,
+    "fidelity_max_abs_delta": 0.0001,
+    "energy_trotter_max_abs_delta": 0.001,
+    "n_up_site0_trotter_max_abs_delta": 0.005,
+    "n_dn_site0_trotter_max_abs_delta": 0.005,
+    "doublon_trotter_max_abs_delta": 0.001
+  },
+  "requested_run_settings": {
+    "t": 1.0,
+    "u": 4.0,
+    "dv": 0.0,
+    "boundary": "periodic",
+    "ordering": "blocked",
+    "t_final": 20.0,
+    "num_times": 121,
+    "suzuki_order": 2,
+    "trotter_steps": 32,
+    "initial_state_source": "vqe"
+  },
+  "hardcoded_qiskit_import_isolation": {
+    "pass": true,
+    "qpe_adapter_range": {
+      "start_line": 292,
+      "end_line": 409
+    },
+    "qiskit_imports": [
+      {
+        "line": 307,
+        "module": "qiskit"
+      },
+      {
+        "line": 308,
+        "module": "qiskit.circuit.library"
+      },
+      {
+        "line": 309,
+        "module": "qiskit.primitives"
+      },
+      {
+        "line": 310,
+        "module": "qiskit.quantum_info"
+      },
+      {
+        "line": 311,
+        "module": "qiskit.synthesis"
+      },
+      {
+        "line": 312,
+        "module": "qiskit_algorithms"
+      },
+      {
+        "line": 313,
+        "module": "qiskit_algorithms.minimum_eigensolvers"
+      }
+    ],
+    "offending_imports": []
+  },
+  "results": [
+    {
+      "L": 2,
+      "pass": true,
+      "metrics_json": "artifacts/hardcoded_vs_qiskit_pipeline_L2_metrics.json",
+      "comparison_pdf": "artifacts/hardcoded_vs_qiskit_pipeline_L2_comparison.pdf",
+      "hardcoded_settings": {
+        "L": 2,
+        "t": 1.0,
+        "u": 4.0,
+        "dv": 0.0,
+        "boundary": "periodic",
+        "ordering": "blocked",
+        "t_final": 20.0,
+        "num_times": 201,
+        "suzuki_order": 2,
+        "trotter_steps": 64,
+        "term_order": "sorted",
+        "initial_state_source": "vqe"
+      },
+      "qiskit_settings": {
+        "L": 2,
+        "t": 1.0,
+        "u": 4.0,
+        "dv": 0.0,
+        "boundary": "periodic",
+        "ordering": "blocked",
+        "t_final": 20.0,
+        "num_times": 201,
+        "suzuki_order": 2,
+        "trotter_steps": 64,
+        "term_order": "sorted",
+        "initial_state_source": "vqe"
+      },
+      "ground_state_energy_abs_delta": 0.0,
+      "trajectory_max_abs_deltas": {
+        "fidelity": 8.59377818263063e-06,
+        "energy_trotter": 2.3499154368722408e-05,
+        "n_up_site0_trotter": 2.781282510533334e-05,
+        "n_dn_site0_trotter": 2.7934482115687942e-05,
+        "doublon_trotter": 2.7910871213676636e-06
+      }
+    },
+    {
+      "L": 3,
+      "pass": false,
+      "metrics_json": "artifacts/hardcoded_vs_qiskit_pipeline_L3_metrics.json",
+      "comparison_pdf": "artifacts/hardcoded_vs_qiskit_pipeline_L3_comparison.pdf",
+      "hardcoded_settings": {
+        "L": 3,
+        "t": 1.0,
+        "u": 4.0,
+        "dv": 0.0,
+        "boundary": "periodic",
+        "ordering": "blocked",
+        "t_final": 20.0,
+        "num_times": 401,
+        "suzuki_order": 2,
+        "trotter_steps": 128,
+        "term_order": "sorted",
+        "initial_state_source": "vqe"
+      },
+      "qiskit_settings": {
+        "L": 3,
+        "t": 1.0,
+        "u": 4.0,
+        "dv": 0.0,
+        "boundary": "periodic",
+        "ordering": "blocked",
+        "t_final": 20.0,
+        "num_times": 401,
+        "suzuki_order": 2,
+        "trotter_steps": 128,
+        "term_order": "sorted",
+        "initial_state_source": "vqe"
+      },
+      "ground_state_energy_abs_delta": 0.0,
+      "trajectory_max_abs_deltas": {
+        "fidelity": 0.0013464071626839713,
+        "energy_trotter": 4.7458908048580994e-05,
+        "n_up_site0_trotter": 0.0031496651890847716,
+        "n_dn_site0_trotter": 0.0024109550934178353,
+        "doublon_trotter": 6.39293585977807e-05
+      }
+    }
+  ],
+  "all_pass": false
+}
