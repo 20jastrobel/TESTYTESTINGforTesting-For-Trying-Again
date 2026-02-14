@@ -221,6 +221,93 @@ def _compare_payloads(hardcoded: dict[str, Any], qiskit: dict[str, Any]) -> dict
     return out
 
 
+# ---------------------------------------------------------------------------
+# Info-box helpers
+# ---------------------------------------------------------------------------
+
+def _sci(x: float) -> str:
+    """Format a float in compact scientific notation (e.g. ``1.23e-06``)."""
+    return f"{x:.2e}"
+
+
+_INFO_BOX_SETTINGS_KEYS = [
+    "L", "t", "u", "dv", "boundary", "ordering",
+    "initial_state_source", "t_final", "num_times",
+    "suzuki_order", "trotter_steps",
+]
+
+
+def _build_info_box_text(
+    settings: dict[str, Any],
+    metrics: dict[str, Any],
+) -> str:
+    """Return the multi-line text for a compact on-plot info box.
+
+    Three sections (separated by a blank line):
+    1. Run settings
+    2. Thresholds
+    3. Max |Δ| values + overall PASS/FAIL
+    """
+    # --- settings ---
+    parts: list[str] = []
+    for k in _INFO_BOX_SETTINGS_KEYS:
+        v = settings.get(k)
+        if v is not None:
+            parts.append(f"{k}={v}")
+    settings_line = "  ".join(parts)
+
+    # --- thresholds ---
+    thr = metrics["acceptance"]["thresholds"]
+    thr_lines = [f"  {k}: {_sci(v)}" for k, v in sorted(thr.items())]
+
+    # --- max_abs_delta + pass/fail ---
+    td = metrics["trajectory_deltas"]
+    delta_lines = []
+    for key in sorted(td.keys()):
+        delta_lines.append(f"  {key}: {_sci(td[key]['max_abs_delta'])}")
+    gs_delta = metrics["ground_state_energy"]["abs_delta"]
+    delta_lines.insert(0, f"  gs_energy: {_sci(gs_delta)}")
+    verdict = "PASS" if metrics["acceptance"]["pass"] else "FAIL"
+
+    return "\n".join([
+        settings_line,
+        "",
+        "thresholds:",
+        *thr_lines,
+        "",
+        "max |Δ|:",
+        *delta_lines,
+        f"result: {verdict}",
+    ])
+
+
+_INFO_BBOX = dict(
+    boxstyle="round,pad=0.4",
+    facecolor="white",
+    edgecolor="#888888",
+    alpha=0.80,
+)
+
+
+def _add_info_box(
+    fig: Any,
+    text: str,
+    *,
+    x: float = 0.01,
+    y: float = 0.88,
+    fontsize: float = 6.5,
+) -> None:
+    """Place a semi-transparent info box on *fig* in figure coordinates."""
+    fig.text(
+        x, y, text,
+        transform=fig.transFigure,
+        va="top", ha="left",
+        fontsize=fontsize,
+        family="monospace",
+        bbox=_INFO_BBOX,
+    )
+
+
 def _autozoom(ax: Any, *arrays: np.ndarray, pad_frac: float = 0.05) -> None:
     """Set y-limits tightly around the data with *pad_frac* padding."""
     combined = np.concatenate([a for a in arrays if a.size > 0])
@@ -256,6 +343,8 @@ def _write_comparison_pdf(
     qk_vqe_val = float(qk_vqe) if qk_vqe is not None else np.nan
 
     with PdfPages(str(pdf_path)) as pdf:
+        _info_text = _build_info_box_text(hardcoded.get("settings", {}), metrics)
+
         # --- Page A: Fidelity + Energy (1x2) ---
         figA, (axF, axE) = plt.subplots(1, 2, figsize=(11.0, 8.5), sharex=True)
 
@@ -279,6 +368,7 @@ def _write_comparison_pdf(
 
         figA.suptitle(f"Pipeline Comparison L={L}: Hardcoded vs Qiskit (Fidelity & Energy)", fontsize=13)
         figA.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+        _add_info_box(figA, _info_text)
         pdf.savefig(figA)
         plt.close(figA)
 
@@ -311,6 +401,7 @@ def _write_comparison_pdf(
 
         figB.suptitle(f"Pipeline Comparison L={L}: Occupations & Doublon (auto-zoomed)", fontsize=13)
         figB.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+        _add_info_box(figB, _info_text)
         pdf.savefig(figB)
         plt.close(figB)
 
@@ -377,6 +468,7 @@ def _write_comparison_pdf(
             ha="center", fontsize=8, style="italic",
         )
         fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.91))
+        _add_info_box(fig2, _info_text)
         pdf.savefig(fig2)
         plt.close(fig2)
 
@@ -624,6 +716,8 @@ def _write_comparison_pages_into_pdf(
     hc_vqe_val = float(hc_vqe) if hc_vqe is not None else np.nan
     qk_vqe_val = float(qk_vqe) if qk_vqe is not None else np.nan
 
+    _info_text = _build_info_box_text(hardcoded.get("settings", {}), metrics)
+
     # --- Page A: Fidelity + Energy (1x2) ---
     figA, (axF, axE) = plt.subplots(1, 2, figsize=(11.0, 8.5), sharex=True)
 
@@ -647,6 +741,7 @@ def _write_comparison_pages_into_pdf(
 
     figA.suptitle(f"Bundle Page: L={L} Fidelity & Energy", fontsize=14)
     figA.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+    _add_info_box(figA, _info_text)
     pdf.savefig(figA)
     plt.close(figA)
 
@@ -679,6 +774,7 @@ def _write_comparison_pages_into_pdf(
 
     figB.suptitle(f"Bundle Page: L={L} Occupations & Doublon (auto-zoomed)", fontsize=13)
     figB.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+    _add_info_box(figB, _info_text)
     pdf.savefig(figB)
     plt.close(figB)
 
@@ -745,6 +841,7 @@ def _write_comparison_pages_into_pdf(
         ha="center", fontsize=8, style="italic",
     )
     fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.91))
+    _add_info_box(fig2, _info_text)
     pdf.savefig(fig2)
     plt.close(fig2)
 
