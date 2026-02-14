@@ -221,6 +221,15 @@ def _compare_payloads(hardcoded: dict[str, Any], qiskit: dict[str, Any]) -> dict
     return out
 
 
+def _autozoom(ax: Any, *arrays: np.ndarray, pad_frac: float = 0.05) -> None:
+    """Set y-limits tightly around the data with *pad_frac* padding."""
+    combined = np.concatenate([a for a in arrays if a.size > 0])
+    lo, hi = float(np.nanmin(combined)), float(np.nanmax(combined))
+    span = hi - lo
+    pad = span * pad_frac if span > 0 else 1e-8
+    ax.set_ylim(lo - pad, hi + pad)
+
+
 def _write_comparison_pdf(
     *,
     pdf_path: Path,
@@ -247,48 +256,63 @@ def _write_comparison_pdf(
     qk_vqe_val = float(qk_vqe) if qk_vqe is not None else np.nan
 
     with PdfPages(str(pdf_path)) as pdf:
-        fig, axes = plt.subplots(2, 2, figsize=(11.0, 8.5), sharex=True)
-        ax00, ax01 = axes[0, 0], axes[0, 1]
-        ax10, ax11 = axes[1, 0], axes[1, 1]
+        # --- Page A: Fidelity + Energy (1x2) ---
+        figA, (axF, axE) = plt.subplots(1, 2, figsize=(11.0, 8.5), sharex=True)
 
-        ax00.plot(times, q("fidelity"), label="Qiskit fidelity", color="#0b3d91", marker="o", markersize=3, markevery=markevery)
-        ax00.plot(times, h("fidelity"), label="Hardcoded fidelity", color="#e15759", linestyle="--", marker="^", markersize=3, markevery=markevery)
-        ax00.set_title("Fidelity")
-        ax00.grid(alpha=0.25)
-        ax00.legend(fontsize=8)
+        axF.plot(times, q("fidelity"), label="Qiskit fidelity", color="#0b3d91", marker="o", markersize=3, markevery=markevery)
+        axF.plot(times, h("fidelity"), label="Hardcoded fidelity", color="#e15759", linestyle="--", marker="^", markersize=3, markevery=markevery)
+        axF.set_title("Fidelity")
+        axF.set_xlabel("Time")
+        axF.grid(alpha=0.25)
+        axF.legend(fontsize=8)
+        _autozoom(axF, h("fidelity"), q("fidelity"))
 
-        ax01.plot(times, q("energy_trotter"), label="Qiskit trotter", color="#2ca02c", marker="s", markersize=3, markevery=markevery)
-        ax01.plot(times, h("energy_trotter"), label="Hardcoded trotter", color="#d62728", linestyle="--", marker="v", markersize=3, markevery=markevery)
-        ax01.plot(times, q("energy_exact"), label="Qiskit exact", color="#111111", linewidth=1.4)
-        ax01.plot(times, h("energy_exact"), label="Hardcoded exact", color="#7f7f7f", linestyle=":", linewidth=1.2)
-        ax01.set_title("Energy")
-        ax01.grid(alpha=0.25)
-        ax01.legend(fontsize=8)
+        axE.plot(times, q("energy_trotter"), label="Qiskit trotter", color="#2ca02c", marker="s", markersize=3, markevery=markevery)
+        axE.plot(times, h("energy_trotter"), label="Hardcoded trotter", color="#d62728", linestyle="--", marker="v", markersize=3, markevery=markevery)
+        axE.plot(times, q("energy_exact"), label="Qiskit exact", color="#111111", linewidth=1.4)
+        axE.plot(times, h("energy_exact"), label="Hardcoded exact", color="#7f7f7f", linestyle=":", linewidth=1.2)
+        axE.set_title("Energy")
+        axE.set_xlabel("Time")
+        axE.grid(alpha=0.25)
+        axE.legend(fontsize=8)
+        _autozoom(axE, h("energy_trotter"), q("energy_trotter"), h("energy_exact"), q("energy_exact"))
 
-        ax10.plot(times, q("n_up_site0_trotter"), label="Qiskit n_up0 trotter", color="#17becf")
-        ax10.plot(times, h("n_up_site0_trotter"), label="Hardcoded n_up0 trotter", color="#0f7f8b", linestyle="--")
-        ax10.plot(times, q("n_dn_site0_trotter"), label="Qiskit n_dn0 trotter", color="#9467bd")
-        ax10.plot(times, h("n_dn_site0_trotter"), label="Hardcoded n_dn0 trotter", color="#6f4d8f", linestyle="--")
-        ax10.plot(times, q("n_up_site0_exact"), label="Qiskit n_up0 exact", color="#1f78b4", linewidth=1.2)
-        ax10.plot(times, h("n_up_site0_exact"), label="Hardcoded n_up0 exact", color="#08306b", linestyle=":", linewidth=1.2)
-        ax10.set_title("Site-0 Occupations")
-        ax10.set_xlabel("Time")
-        ax10.grid(alpha=0.25)
-        ax10.legend(fontsize=8)
+        figA.suptitle(f"Pipeline Comparison L={L}: Hardcoded vs Qiskit (Fidelity & Energy)", fontsize=13)
+        figA.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+        pdf.savefig(figA)
+        plt.close(figA)
 
-        ax11.plot(times, q("doublon_trotter"), label="Qiskit doublon trotter", color="#e377c2")
-        ax11.plot(times, h("doublon_trotter"), label="Hardcoded doublon trotter", color="#c251a1", linestyle="--")
-        ax11.plot(times, q("doublon_exact"), label="Qiskit doublon exact", color="#8c564b", linewidth=1.2)
-        ax11.plot(times, h("doublon_exact"), label="Hardcoded doublon exact", color="#5f3a33", linestyle=":", linewidth=1.2)
-        ax11.set_title("Doublon")
-        ax11.set_xlabel("Time")
-        ax11.grid(alpha=0.25)
-        ax11.legend(fontsize=8)
+        # --- Page B: n_up + n_dn + Doublon (1x3) ---
+        figB, (axUp, axDn, axD) = plt.subplots(1, 3, figsize=(11.0, 8.5), sharex=True)
 
-        fig.suptitle(f"Pipeline Comparison L={L}: Hardcoded vs Qiskit", fontsize=14)
-        fig.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
-        pdf.savefig(fig)
-        plt.close(fig)
+        axUp.plot(times, q("n_up_site0_trotter"), label="Qiskit trotter", color="#17becf")
+        axUp.plot(times, h("n_up_site0_trotter"), label="Hardcoded trotter", color="#0f7f8b", linestyle="--")
+        axUp.set_title("Site-0 n_up")
+        axUp.set_xlabel("Time")
+        axUp.grid(alpha=0.25)
+        axUp.legend(fontsize=7)
+        _autozoom(axUp, h("n_up_site0_trotter"), q("n_up_site0_trotter"))
+
+        axDn.plot(times, q("n_dn_site0_trotter"), label="Qiskit trotter", color="#9467bd")
+        axDn.plot(times, h("n_dn_site0_trotter"), label="Hardcoded trotter", color="#6f4d8f", linestyle="--")
+        axDn.set_title("Site-0 n_dn")
+        axDn.set_xlabel("Time")
+        axDn.grid(alpha=0.25)
+        axDn.legend(fontsize=7)
+        _autozoom(axDn, h("n_dn_site0_trotter"), q("n_dn_site0_trotter"))
+
+        axD.plot(times, q("doublon_trotter"), label="Qiskit trotter", color="#e377c2")
+        axD.plot(times, h("doublon_trotter"), label="Hardcoded trotter", color="#c251a1", linestyle="--")
+        axD.set_title("Doublon")
+        axD.set_xlabel("Time")
+        axD.grid(alpha=0.25)
+        axD.legend(fontsize=7)
+        _autozoom(axD, h("doublon_trotter"), q("doublon_trotter"))
+
+        figB.suptitle(f"Pipeline Comparison L={L}: Occupations & Doublon (auto-zoomed)", fontsize=13)
+        figB.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+        pdf.savefig(figB)
+        plt.close(figB)
 
         figv, axesv = plt.subplots(1, 2, figsize=(11.0, 8.5))
         vx0, vx1 = axesv[0], axesv[1]
@@ -593,44 +617,63 @@ def _write_comparison_pages_into_pdf(
     hc_vqe_val = float(hc_vqe) if hc_vqe is not None else np.nan
     qk_vqe_val = float(qk_vqe) if qk_vqe is not None else np.nan
 
-    fig, axes = plt.subplots(2, 2, figsize=(11.0, 8.5), sharex=True)
-    ax00, ax01 = axes[0, 0], axes[0, 1]
-    ax10, ax11 = axes[1, 0], axes[1, 1]
+    # --- Page A: Fidelity + Energy (1x2) ---
+    figA, (axF, axE) = plt.subplots(1, 2, figsize=(11.0, 8.5), sharex=True)
 
-    ax00.plot(times, q("fidelity"), label="Qiskit fidelity", color="#0b3d91", marker="o", markersize=3, markevery=markevery)
-    ax00.plot(times, h("fidelity"), label="Hardcoded fidelity", color="#e15759", linestyle="--", marker="^", markersize=3, markevery=markevery)
-    ax00.set_title(f"L={L} Fidelity")
-    ax00.grid(alpha=0.25)
-    ax00.legend(fontsize=8)
+    axF.plot(times, q("fidelity"), label="Qiskit fidelity", color="#0b3d91", marker="o", markersize=3, markevery=markevery)
+    axF.plot(times, h("fidelity"), label="Hardcoded fidelity", color="#e15759", linestyle="--", marker="^", markersize=3, markevery=markevery)
+    axF.set_title(f"L={L} Fidelity")
+    axF.set_xlabel("Time")
+    axF.grid(alpha=0.25)
+    axF.legend(fontsize=8)
+    _autozoom(axF, h("fidelity"), q("fidelity"))
 
-    ax01.plot(times, q("energy_trotter"), label="Qiskit trotter", color="#2ca02c")
-    ax01.plot(times, h("energy_trotter"), label="Hardcoded trotter", color="#d62728", linestyle="--")
-    ax01.plot(times, q("energy_exact"), label="Qiskit exact", color="#111111", linewidth=1.2)
-    ax01.plot(times, h("energy_exact"), label="Hardcoded exact", color="#7f7f7f", linestyle=":", linewidth=1.2)
-    ax01.set_title(f"L={L} Energy")
-    ax01.grid(alpha=0.25)
-    ax01.legend(fontsize=8)
+    axE.plot(times, q("energy_trotter"), label="Qiskit trotter", color="#2ca02c")
+    axE.plot(times, h("energy_trotter"), label="Hardcoded trotter", color="#d62728", linestyle="--")
+    axE.plot(times, q("energy_exact"), label="Qiskit exact", color="#111111", linewidth=1.2)
+    axE.plot(times, h("energy_exact"), label="Hardcoded exact", color="#7f7f7f", linestyle=":", linewidth=1.2)
+    axE.set_title(f"L={L} Energy")
+    axE.set_xlabel("Time")
+    axE.grid(alpha=0.25)
+    axE.legend(fontsize=8)
+    _autozoom(axE, h("energy_trotter"), q("energy_trotter"), h("energy_exact"), q("energy_exact"))
 
-    ax10.plot(times, q("n_up_site0_trotter"), label="Qiskit n_up0 trotter", color="#17becf")
-    ax10.plot(times, h("n_up_site0_trotter"), label="Hardcoded n_up0 trotter", color="#0f7f8b", linestyle="--")
-    ax10.plot(times, q("n_dn_site0_trotter"), label="Qiskit n_dn0 trotter", color="#9467bd")
-    ax10.plot(times, h("n_dn_site0_trotter"), label="Hardcoded n_dn0 trotter", color="#6f4d8f", linestyle="--")
-    ax10.set_title(f"L={L} Site-0 Occupations")
-    ax10.set_xlabel("Time")
-    ax10.grid(alpha=0.25)
-    ax10.legend(fontsize=8)
+    figA.suptitle(f"Bundle Page: L={L} Fidelity & Energy", fontsize=14)
+    figA.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+    pdf.savefig(figA)
+    plt.close(figA)
 
-    ax11.plot(times, q("doublon_trotter"), label="Qiskit doublon trotter", color="#e377c2")
-    ax11.plot(times, h("doublon_trotter"), label="Hardcoded doublon trotter", color="#c251a1", linestyle="--")
-    ax11.set_title(f"L={L} Doublon")
-    ax11.set_xlabel("Time")
-    ax11.grid(alpha=0.25)
-    ax11.legend(fontsize=8)
+    # --- Page B: n_up + n_dn + Doublon (1x3, auto-zoomed) ---
+    figB, (axUp, axDn, axD) = plt.subplots(1, 3, figsize=(11.0, 8.5), sharex=True)
 
-    fig.suptitle(f"Bundle Page: L={L} Trajectory Comparison", fontsize=14)
-    fig.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
-    pdf.savefig(fig)
-    plt.close(fig)
+    axUp.plot(times, q("n_up_site0_trotter"), label="Qiskit trotter", color="#17becf")
+    axUp.plot(times, h("n_up_site0_trotter"), label="Hardcoded trotter", color="#0f7f8b", linestyle="--")
+    axUp.set_title(f"L={L} Site-0 n_up")
+    axUp.set_xlabel("Time")
+    axUp.grid(alpha=0.25)
+    axUp.legend(fontsize=7)
+    _autozoom(axUp, h("n_up_site0_trotter"), q("n_up_site0_trotter"))
+
+    axDn.plot(times, q("n_dn_site0_trotter"), label="Qiskit trotter", color="#9467bd")
+    axDn.plot(times, h("n_dn_site0_trotter"), label="Hardcoded trotter", color="#6f4d8f", linestyle="--")
+    axDn.set_title(f"L={L} Site-0 n_dn")
+    axDn.set_xlabel("Time")
+    axDn.grid(alpha=0.25)
+    axDn.legend(fontsize=7)
+    _autozoom(axDn, h("n_dn_site0_trotter"), q("n_dn_site0_trotter"))
+
+    axD.plot(times, q("doublon_trotter"), label="Qiskit trotter", color="#e377c2")
+    axD.plot(times, h("doublon_trotter"), label="Hardcoded trotter", color="#c251a1", linestyle="--")
+    axD.set_title(f"L={L} Doublon")
+    axD.set_xlabel("Time")
+    axD.grid(alpha=0.25)
+    axD.legend(fontsize=7)
+    _autozoom(axD, h("doublon_trotter"), q("doublon_trotter"))
+
+    figB.suptitle(f"Bundle Page: L={L} Occupations & Doublon (auto-zoomed)", fontsize=13)
+    figB.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+    pdf.savefig(figB)
+    plt.close(figB)
 
     figv, axesv = plt.subplots(1, 2, figsize=(11.0, 8.5))
     vx0, vx1 = axesv[0], axesv[1]
