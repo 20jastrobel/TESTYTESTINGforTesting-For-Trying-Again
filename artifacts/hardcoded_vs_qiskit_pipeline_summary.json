@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-02-13T23:28:14.857356+00:00",
+  "generated_utc": "2026-02-14T00:14:13.801819+00:00",
   "description": "Hardcoded-first vs Qiskit Hubbard pipeline comparison.",
   "l_values": [
     2,
@@ -23,7 +23,8 @@
     "num_times": 121,
     "suzuki_order": 2,
     "trotter_steps": 32,
-    "initial_state_source": "vqe"
+    "initial_state_source": "vqe",
+    "skip_qpe": false
   },
   "hardcoded_qiskit_import_isolation": {
     "pass": true,
@@ -67,8 +68,8 @@
     {
       "L": 2,
       "pass": true,
-      "metrics_json": "artifacts/hardcoded_vs_qiskit_pipeline_L2_metrics.json",
-      "comparison_pdf": "artifacts/hardcoded_vs_qiskit_pipeline_L2_comparison.pdf",
+      "metrics_json": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/hardcoded_vs_qiskit_pipeline_L2_metrics.json",
+      "comparison_pdf": null,
       "hardcoded_settings": {
         "L": 2,
         "t": 1.0,
@@ -109,8 +110,8 @@
     {
       "L": 3,
       "pass": false,
-      "metrics_json": "artifacts/hardcoded_vs_qiskit_pipeline_L3_metrics.json",
-      "comparison_pdf": "artifacts/hardcoded_vs_qiskit_pipeline_L3_comparison.pdf",
+      "metrics_json": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/hardcoded_vs_qiskit_pipeline_L3_metrics.json",
+      "comparison_pdf": null,
       "hardcoded_settings": {
         "L": 3,
         "t": 1.0,

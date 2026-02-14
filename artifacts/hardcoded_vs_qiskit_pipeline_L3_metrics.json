@@ -1,8 +1,8 @@
 {
-  "generated_utc": "2026-02-13T23:28:14.322538+00:00",
+  "generated_utc": "2026-02-14T00:14:13.792553+00:00",
   "L": 3,
-  "hardcoded_json": "artifacts/hardcoded_pipeline_L3.json",
-  "qiskit_json": "artifacts/qiskit_pipeline_L3.json",
+  "hardcoded_json": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/hardcoded_pipeline_L3.json",
+  "qiskit_json": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/qiskit_pipeline_L3.json",
   "metrics": {
     "time_grid": {
       "num_times": 401,

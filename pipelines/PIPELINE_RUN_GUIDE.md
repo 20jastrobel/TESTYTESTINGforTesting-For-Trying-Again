@@ -159,6 +159,24 @@ Defaults:
   --output-pdf artifacts/qiskit_pipeline_L3.pdf
 ```
 
+### 5) Run the L=2/L=3 regression harness
+
+```bash
+bash pipelines/regression_L2_L3.sh
+```
+
+This writes `_reg` JSON/PDF outputs for L=2 and L=3, runs the compare runner, runs
+`manual_compare_jsons.py`, and ends with `REGRESSION PASS` or `REGRESSION FAIL`.
+
+### 6) Manual JSON-vs-JSON consistency check
+
+```bash
+/opt/anaconda3/bin/python pipelines/manual_compare_jsons.py \
+  --hardcoded artifacts/hardcoded_pipeline_L3.json \
+  --qiskit artifacts/qiskit_pipeline_L3.json \
+  --metrics artifacts/hardcoded_vs_qiskit_pipeline_L3_metrics.json
+```
+
 ## Generated Artifacts
 
 Under `artifacts/`:

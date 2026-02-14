@@ -15,9 +15,11 @@ import ast
 import json
 import math
 import os
+import pprint
 import shutil
 import subprocess
 import sys
+import textwrap
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -79,6 +81,86 @@ def _arr(rows: list[dict[str, Any]], key: str) -> np.ndarray:
 def _fp(x: float) -> str:
     # Round-trip-safe float text; avoids presentation rounding like %.12e.
     return repr(float(x))
+
+
+def _delta_metric_definition_text() -> str:
+    return (
+        "ΔF(t)      = |F_hc(t) - F_qk(t)|\n"
+        "ΔE_trot(t) = |E_trot_hc(t) - E_trot_qk(t)|\n"
+        "Δn_up0(t)  = |n_up0_hc(t) - n_up0_qk(t)|\n"
+        "Δn_dn0(t)  = |n_dn0_hc(t) - n_dn0_qk(t)|\n"
+        "ΔD(t)      = |D_hc(t) - D_qk(t)|\n"
+        "F_pipeline(t) is the pipeline's stored trajectory fidelity value "
+        "(as computed internally vs that pipeline's exact evolution)."
+    )
+
+
+def _fmt_obj(obj: Any, *, width: int = 90) -> str:
+    """Pretty-format a dict/list so no single line exceeds *width* chars."""
+    formatted = pprint.pformat(obj, width=width, compact=True, sort_dicts=True)
+    wrapped_lines: list[str] = []
+    for line in formatted.splitlines():
+        if len(line) <= width:
+            wrapped_lines.append(line)
+        else:
+            wrapped_lines.extend(textwrap.wrap(line, width=width, subsequent_indent="  "))
+    return "\n".join(wrapped_lines)
+
+
+def _render_text_page(
+    pdf: "PdfPages",
+    lines: list[str],
+    *,
+    fontsize: int = 9,
+    line_spacing: float = 0.028,
+    max_line_width: int = 115,
+) -> None:
+    """Render *lines* onto a text-only PDF page with proper wrapping.
+
+    Dict-like objects should already have been formatted via ``_fmt_obj``
+    before being placed into *lines*.  This function applies a final
+    safety wrap so that no single rendered line exceeds *max_line_width*
+    characters, preventing right-edge truncation.
+    """
+    # Expand any remaining over-long lines.
+    expanded: list[str] = []
+    for raw in lines:
+        if len(raw) <= max_line_width:
+            expanded.append(raw)
+        else:
+            expanded.extend(
+                textwrap.wrap(raw, width=max_line_width, subsequent_indent="    ")
+            )
+
+    fig = plt.figure(figsize=(11.0, 8.5))
+    ax = fig.add_subplot(111)
+    ax.axis("off")
+
+    x0 = 0.05
+    y = 0.95
+    for line in expanded:
+        ax.text(
+            x0,
+            y,
+            line,
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            family="monospace",
+            fontsize=fontsize,
+        )
+        y -= line_spacing
+        if y < 0.02:
+            # Start a new page if we run out of room.
+            pdf.savefig(fig)
+            plt.close(fig)
+            fig = plt.figure(figsize=(11.0, 8.5))
+            ax = fig.add_subplot(111)
+            ax.axis("off")
+            y = 0.95
+
+    pdf.savefig(fig)
+    plt.close(fig)
 
 
 def _compare_payloads(hardcoded: dict[str, Any], qiskit: dict[str, Any]) -> dict[str, Any]:
@@ -267,12 +349,12 @@ def _write_comparison_pdf(
         pdf.savefig(fig2)
         plt.close(fig2)
 
-        fig3 = plt.figure(figsize=(11.0, 8.5))
-        ax3 = fig3.add_subplot(111)
-        ax3.axis("off")
         td = metrics["trajectory_deltas"]
         lines = [
             f"L={L} metrics summary",
+            "",
+            "Delta metric definitions:",
+            *_delta_metric_definition_text().splitlines(),
             "",
             f"ground_state_energy_abs_delta = {_fp(metrics['ground_state_energy']['abs_delta'])}",
             f"fidelity max/mean/final = {_fp(td['fidelity']['max_abs_delta'])} / {_fp(td['fidelity']['mean_abs_delta'])} / {_fp(td['fidelity']['final_abs_delta'])}",
@@ -281,12 +363,12 @@ def _write_comparison_pdf(
             f"n_dn_site0_trotter max/mean/final = {_fp(td['n_dn_site0_trotter']['max_abs_delta'])} / {_fp(td['n_dn_site0_trotter']['mean_abs_delta'])} / {_fp(td['n_dn_site0_trotter']['final_abs_delta'])}",
             f"doublon_trotter max/mean/final = {_fp(td['doublon_trotter']['max_abs_delta'])} / {_fp(td['doublon_trotter']['mean_abs_delta'])} / {_fp(td['doublon_trotter']['final_abs_delta'])}",
             "",
-            f"checks = {metrics['acceptance']['checks']}",
+            "checks:",
+            *_fmt_obj(metrics["acceptance"]["checks"]).splitlines(),
+            "",
             f"PASS = {metrics['acceptance']['pass']}",
         ]
-        ax3.text(0.02, 0.98, "\n".join(lines), va="top", ha="left", family="monospace", fontsize=9)
-        pdf.savefig(fig3)
-        plt.close(fig3)
+        _render_text_page(pdf, lines)
 
 
 def _write_bundle_pdf(
@@ -329,28 +411,29 @@ def _write_bundle_pdf(
     has_qpe_data = bool(np.isfinite(hc_qpe).any() or np.isfinite(qk_qpe).any())
 
     with PdfPages(str(bundle_path)) as pdf:
-        fig0 = plt.figure(figsize=(11.0, 8.5))
-        ax0 = fig0.add_subplot(111)
-        ax0.axis("off")
         lines = [
             "Hardcoded vs Qiskit Pipeline Comparison Summary",
             "",
             f"generated_utc: {overall_summary['generated_utc']}",
             f"all_pass: {overall_summary['all_pass']}",
             f"l_values: {overall_summary['l_values']}",
-            "trajectory_comparison_basis: trotter trajectories start from each pipeline's selected initial_state_source (default: vqe)",
+            "trajectory_comparison_basis: trotter trajectories start from",
+            "  each pipeline's selected initial_state_source (default: vqe)",
             "",
-            f"thresholds: {json.dumps(THRESHOLDS)}",
+            "thresholds:",
+            *_fmt_obj(THRESHOLDS).splitlines(),
             "",
-            f"hardcoded_qiskit_import_isolation: {isolation_check}",
+            "hardcoded_qiskit_import_isolation:",
+            *_fmt_obj(isolation_check).splitlines(),
+            "",
+            "Delta metric definitions:",
+            *_delta_metric_definition_text().splitlines(),
             "",
             "Per-L pass flags:",
         ]
         for row in overall_summary["results"]:
             lines.append(f"L={row['L']} pass={row['pass']} metrics_json={row['metrics_json']}")
-        ax0.text(0.02, 0.98, "\n".join(lines), va="top", ha="left", family="monospace", fontsize=9)
-        pdf.savefig(fig0)
-        plt.close(fig0)
+        _render_text_page(pdf, lines)
 
         x = np.arange(len(lvals), dtype=float)
 
@@ -608,15 +691,15 @@ def _write_comparison_pages_into_pdf(
     pdf.savefig(fig2)
     plt.close(fig2)
 
-    fig3 = plt.figure(figsize=(11.0, 8.5))
-    ax3 = fig3.add_subplot(111)
-    ax3.axis("off")
     td = metrics["trajectory_deltas"]
     lines = [
         f"Bundle metrics page L={L}",
         "",
         "Trotterization comparison uses each path's configured initial state.",
         "For VQE-init runs, both exact(t) and trotter(t) start from the VQE ansatz state.",
+        "",
+        "Delta metric definitions:",
+        *_delta_metric_definition_text().splitlines(),
         "",
         f"ground_state_energy_abs_delta = {_fp(metrics['ground_state_energy']['abs_delta'])}",
         f"fidelity max/mean/final = {_fp(td['fidelity']['max_abs_delta'])} / {_fp(td['fidelity']['mean_abs_delta'])} / {_fp(td['fidelity']['final_abs_delta'])}",
@@ -625,12 +708,12 @@ def _write_comparison_pages_into_pdf(
         f"n_dn_site0_trotter max/mean/final = {_fp(td['n_dn_site0_trotter']['max_abs_delta'])} / {_fp(td['n_dn_site0_trotter']['mean_abs_delta'])} / {_fp(td['n_dn_site0_trotter']['final_abs_delta'])}",
         f"doublon_trotter max/mean/final = {_fp(td['doublon_trotter']['max_abs_delta'])} / {_fp(td['doublon_trotter']['mean_abs_delta'])} / {_fp(td['doublon_trotter']['final_abs_delta'])}",
         "",
-        f"checks = {metrics['acceptance']['checks']}",
+        "checks:",
+        *_fmt_obj(metrics["acceptance"]["checks"]).splitlines(),
+        "",
         f"PASS = {metrics['acceptance']['pass']}",
     ]
-    ax3.text(0.02, 0.98, "\n".join(lines), va="top", ha="left", family="monospace", fontsize=9)
-    pdf.savefig(fig3)
-    plt.close(fig3)
+    _render_text_page(pdf, lines)
 
 
 def _check_hardcoded_qiskit_import_isolation(path: Path) -> dict[str, Any]:
@@ -848,6 +931,8 @@ def main() -> None:
             "qiskit_json": str(row.qiskit_json),
             "metrics": metrics,
         }
+        print(f"Delta metric definitions (L={row.L}):")
+        print(_delta_metric_definition_text())
         row.compare_metrics_json.write_text(json.dumps(metrics_payload, indent=2), encoding="utf-8")
 
         if args.with_per_l_pdfs:
