@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-02-13T23:24:42.639669+00:00",
+  "generated_utc": "2026-02-14T02:07:28.458943+00:00",
   "pipeline": "qiskit",
   "settings": {
     "L": 2,
@@ -13,7 +13,8 @@
     "suzuki_order": 2,
     "trotter_steps": 64,
     "term_order": "sorted",
-    "initial_state_source": "vqe"
+    "initial_state_source": "vqe",
+    "skip_qpe": false
   },
   "hamiltonian": {
     "num_qubits": 4,
@@ -130,8 +131,8 @@
     "phase": 0.03125,
     "bound": 10.0,
     "evolution_time": 0.3141592653589793,
-    "num_evaluation_qubits": 6,
-    "shots": 1024
+    "num_evaluation_qubits": 5,
+    "shots": 256
   },
   "initial_state": {
     "source": "vqe",

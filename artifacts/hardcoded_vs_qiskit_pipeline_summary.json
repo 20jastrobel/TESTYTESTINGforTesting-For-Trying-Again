@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-02-14T00:29:22.746399+00:00",
+  "generated_utc": "2026-02-14T02:09:29.613202+00:00",
   "description": "Hardcoded-first vs Qiskit Hubbard pipeline comparison.",
   "l_values": [
     2,
@@ -20,9 +20,9 @@
     "boundary": "periodic",
     "ordering": "blocked",
     "t_final": 20.0,
-    "num_times": 121,
+    "num_times": 201,
     "suzuki_order": 2,
-    "trotter_steps": 32,
+    "trotter_steps": 64,
     "initial_state_source": "vqe",
     "skip_qpe": false
   },
@@ -69,7 +69,7 @@
       "L": 2,
       "pass": true,
       "metrics_json": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/hardcoded_vs_qiskit_pipeline_L2_metrics.json",
-      "comparison_pdf": null,
+      "comparison_pdf": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/hardcoded_vs_qiskit_pipeline_L2_comparison.pdf",
       "hardcoded_settings": {
         "L": 2,
         "t": 1.0,
@@ -82,7 +82,8 @@
         "suzuki_order": 2,
         "trotter_steps": 64,
         "term_order": "sorted",
-        "initial_state_source": "vqe"
+        "initial_state_source": "vqe",
+        "skip_qpe": false
       },
       "qiskit_settings": {
         "L": 2,
@@ -96,7 +97,8 @@
         "suzuki_order": 2,
         "trotter_steps": 64,
         "term_order": "sorted",
-        "initial_state_source": "vqe"
+        "initial_state_source": "vqe",
+        "skip_qpe": false
       },
       "ground_state_energy_abs_delta": 0.0,
       "trajectory_max_abs_deltas": {
@@ -111,7 +113,7 @@
       "L": 3,
       "pass": false,
       "metrics_json": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/hardcoded_vs_qiskit_pipeline_L3_metrics.json",
-      "comparison_pdf": null,
+      "comparison_pdf": "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatestcuziknothing/artifacts/hardcoded_vs_qiskit_pipeline_L3_comparison.pdf",
       "hardcoded_settings": {
         "L": 3,
         "t": 1.0,
@@ -120,11 +122,12 @@
         "boundary": "periodic",
         "ordering": "blocked",
         "t_final": 20.0,
-        "num_times": 401,
+        "num_times": 201,
         "suzuki_order": 2,
-        "trotter_steps": 128,
+        "trotter_steps": 64,
         "term_order": "sorted",
-        "initial_state_source": "vqe"
+        "initial_state_source": "vqe",
+        "skip_qpe": false
       },
       "qiskit_settings": {
         "L": 3,
@@ -134,19 +137,20 @@
         "boundary": "periodic",
         "ordering": "blocked",
         "t_final": 20.0,
-        "num_times": 401,
+        "num_times": 201,
         "suzuki_order": 2,
-        "trotter_steps": 128,
+        "trotter_steps": 64,
         "term_order": "sorted",
-        "initial_state_source": "vqe"
+        "initial_state_source": "vqe",
+        "skip_qpe": false
       },
       "ground_state_energy_abs_delta": 0.0,
       "trajectory_max_abs_deltas": {
-        "fidelity": 0.0013464071626839713,
-        "energy_trotter": 4.7458908048580994e-05,
-        "n_up_site0_trotter": 0.0031496651890847716,
-        "n_dn_site0_trotter": 0.0024109550934178353,
-        "doublon_trotter": 6.39293585977807e-05
+        "fidelity": 0.01498211624223178,
+        "energy_trotter": 0.0009262789164428131,
+        "n_up_site0_trotter": 0.005047973459523791,
+        "n_dn_site0_trotter": 0.00442528828696051,
+        "doublon_trotter": 0.000386736648408631
       }
     }
   ],

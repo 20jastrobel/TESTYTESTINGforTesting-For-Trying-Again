@@ -628,10 +628,11 @@ def _write_pipeline_pdf(pdf_path: Path, payload: dict[str, Any]) -> None:
         vx1.grid(axis="y", alpha=0.25)
 
         figv.suptitle(
-            "VQE energy is reported explicitly and is not inferred from Trotter t=0.",
-            fontsize=11,
+            "When initial_state_source=vqe, Trotter E(t=0) = ⟨ψ_vqe|H|ψ_vqe⟩ = VQE energy.\n"
+            "VQE energy ≠ exact ground state energy unless VQE fully converged.",
+            fontsize=10,
         )
-        figv.tight_layout(rect=(0.0, 0.03, 1.0, 0.93))
+        figv.tight_layout(rect=(0.0, 0.03, 1.0, 0.91))
         pdf.savefig(figv)
         plt.close(figv)
 

@@ -308,6 +308,29 @@ def _add_info_box(
     )
 
 
+def _render_info_page(pdf: "PdfPages", info_text: str, title: str = "") -> None:
+    """Render the run-settings / metrics info box on its own dedicated page.
+
+    This avoids overlapping plot content that occurs when the info box is
+    placed on the same figure as subplots.
+    """
+    fig = plt.figure(figsize=(11.0, 8.5))
+    ax = fig.add_subplot(111)
+    ax.axis("off")
+    if title:
+        ax.set_title(title, fontsize=14, pad=20)
+    ax.text(
+        0.05, 0.92, info_text,
+        transform=ax.transAxes,
+        va="top", ha="left",
+        fontsize=9,
+        family="monospace",
+        bbox=_INFO_BBOX,
+    )
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
 def _autozoom(ax: Any, *arrays: np.ndarray, pad_frac: float = 0.05) -> None:
     """Set y-limits tightly around the data with *pad_frac* padding."""
     combined = np.concatenate([a for a in arrays if a.size > 0])
@@ -345,6 +368,9 @@ def _write_comparison_pdf(
     with PdfPages(str(pdf_path)) as pdf:
         _info_text = _build_info_box_text(hardcoded.get("settings", {}), metrics)
 
+        # --- Dedicated info page (no overlap with plots) ---
+        _render_info_page(pdf, _info_text, title=f"L={L} Run Settings & Metrics Summary")
+
         # --- Page A: Fidelity + Energy (1x2) ---
         figA, (axF, axE) = plt.subplots(1, 2, figsize=(11.0, 8.5), sharex=True)
 
@@ -368,7 +394,6 @@ def _write_comparison_pdf(
 
         figA.suptitle(f"Pipeline Comparison L={L}: Hardcoded vs Qiskit (Fidelity & Energy)", fontsize=13)
         figA.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
-        _add_info_box(figA, _info_text)
         pdf.savefig(figA)
         plt.close(figA)
 
@@ -401,7 +426,6 @@ def _write_comparison_pdf(
 
         figB.suptitle(f"Pipeline Comparison L={L}: Occupations & Doublon (auto-zoomed)", fontsize=13)
         figB.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
-        _add_info_box(figB, _info_text)
         pdf.savefig(figB)
         plt.close(figB)
 
@@ -427,11 +451,11 @@ def _write_comparison_pdf(
         vx1.grid(axis="y", alpha=0.25)
 
         figv.suptitle(
-            "VQE is a separate quantity from the Trotter t=0 value; "
-            "do not infer VQE energy from trajectory plots.",
-            fontsize=11,
+            "When initial_state_source=vqe, Trotter E(t=0) = ⟨ψ_vqe|H|ψ_vqe⟩ = VQE energy.\n"
+            "VQE energy ≠ exact ground state energy unless VQE fully converged.",
+            fontsize=10,
         )
-        figv.tight_layout(rect=(0.0, 0.03, 1.0, 0.93))
+        figv.tight_layout(rect=(0.0, 0.03, 1.0, 0.91))
         pdf.savefig(figv)
         plt.close(figv)
 
@@ -468,7 +492,6 @@ def _write_comparison_pdf(
             ha="center", fontsize=8, style="italic",
         )
         fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.91))
-        _add_info_box(fig2, _info_text)
         pdf.savefig(fig2)
         plt.close(fig2)
 
@@ -718,6 +741,9 @@ def _write_comparison_pages_into_pdf(
 
     _info_text = _build_info_box_text(hardcoded.get("settings", {}), metrics)
 
+    # --- Dedicated info page (no overlap with plots) ---
+    _render_info_page(pdf, _info_text, title=f"Bundle L={L}: Run Settings & Metrics Summary")
+
     # --- Page A: Fidelity + Energy (1x2) ---
     figA, (axF, axE) = plt.subplots(1, 2, figsize=(11.0, 8.5), sharex=True)
 
@@ -741,7 +767,6 @@ def _write_comparison_pages_into_pdf(
 
     figA.suptitle(f"Bundle Page: L={L} Fidelity & Energy", fontsize=14)
     figA.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
-    _add_info_box(figA, _info_text)
     pdf.savefig(figA)
     plt.close(figA)
 
@@ -774,7 +799,6 @@ def _write_comparison_pages_into_pdf(
 
     figB.suptitle(f"Bundle Page: L={L} Occupations & Doublon (auto-zoomed)", fontsize=13)
     figB.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
-    _add_info_box(figB, _info_text)
     pdf.savefig(figB)
     plt.close(figB)
 
@@ -800,11 +824,11 @@ def _write_comparison_pages_into_pdf(
     vx1.grid(axis="y", alpha=0.25)
 
     figv.suptitle(
-        "VQE is a separate quantity from the Trotter t=0 value; "
-        "do not infer VQE energy from trajectory plots.",
-        fontsize=11,
+        "When initial_state_source=vqe, Trotter E(t=0) = ⟨ψ_vqe|H|ψ_vqe⟩ = VQE energy.\n"
+        "VQE energy ≠ exact ground state energy unless VQE fully converged.",
+        fontsize=10,
     )
-    figv.tight_layout(rect=(0.0, 0.03, 1.0, 0.93))
+    figv.tight_layout(rect=(0.0, 0.03, 1.0, 0.91))
     pdf.savefig(figv)
     plt.close(figv)
 
@@ -841,7 +865,6 @@ def _write_comparison_pages_into_pdf(
         ha="center", fontsize=8, style="italic",
     )
     fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.91))
-    _add_info_box(fig2, _info_text)
     pdf.savefig(fig2)
     plt.close(fig2)
 
@@ -938,19 +961,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--boundary", choices=["periodic", "open"], default="periodic")
     parser.add_argument("--ordering", choices=["blocked", "interleaved"], default="blocked")
     parser.add_argument("--t-final", type=float, default=20.0)
-    parser.add_argument("--num-times", type=int, default=121)
+    parser.add_argument("--num-times", type=int, default=201)
     parser.add_argument("--suzuki-order", type=int, default=2)
-    parser.add_argument("--trotter-steps", type=int, default=32)
+    parser.add_argument("--trotter-steps", type=int, default=64)
 
-    parser.add_argument("--hardcoded-vqe-reps", type=int, default=1)
-    parser.add_argument("--hardcoded-vqe-restarts", type=int, default=1)
+    parser.add_argument("--hardcoded-vqe-reps", type=int, default=2)
+    parser.add_argument("--hardcoded-vqe-restarts", type=int, default=3)
     parser.add_argument("--hardcoded-vqe-seed", type=int, default=7)
-    parser.add_argument("--hardcoded-vqe-maxiter", type=int, default=40)
+    parser.add_argument("--hardcoded-vqe-maxiter", type=int, default=600)
 
     parser.add_argument("--qiskit-vqe-reps", type=int, default=2)
     parser.add_argument("--qiskit-vqe-restarts", type=int, default=3)
     parser.add_argument("--qiskit-vqe-seed", type=int, default=7)
-    parser.add_argument("--qiskit-vqe-maxiter", type=int, default=12)
+    parser.add_argument("--qiskit-vqe-maxiter", type=int, default=600)
 
     parser.add_argument("--qpe-eval-qubits", type=int, default=5)
     parser.add_argument("--qpe-shots", type=int, default=256)
