@@ -344,32 +344,39 @@ def _write_comparison_pdf(
         pdf.savefig(figv)
         plt.close(figv)
 
-        fig2, axes2 = plt.subplots(2, 2, figsize=(11.0, 8.5), sharex=True)
+        fig2, axes2 = plt.subplots(2, 2, figsize=(11.0, 8.5))
         bx00, bx01 = axes2[0, 0], axes2[0, 1]
         bx10, bx11 = axes2[1, 0], axes2[1, 1]
 
         bx00.plot(times, np.abs(h("fidelity") - q("fidelity")), color="#1f77b4")
-        bx00.set_title("|delta fidelity|")
+        bx00.set_title("|ΔF(t)|")
+        bx00.set_xlabel("Time")
         bx00.grid(alpha=0.25)
 
         bx01.plot(times, np.abs(h("energy_trotter") - q("energy_trotter")), color="#d62728")
-        bx01.set_title("|delta energy_trotter|")
+        bx01.set_title("|ΔE_trot(t)|")
+        bx01.set_xlabel("Time")
         bx01.grid(alpha=0.25)
 
-        bx10.plot(times, np.abs(h("n_up_site0_trotter") - q("n_up_site0_trotter")), label="|delta n_up0|", color="#17becf")
-        bx10.plot(times, np.abs(h("n_dn_site0_trotter") - q("n_dn_site0_trotter")), label="|delta n_dn0|", color="#9467bd")
-        bx10.set_title("|delta occupations|")
+        bx10.plot(times, np.abs(h("n_up_site0_trotter") - q("n_up_site0_trotter")), label="|Δn_up0|", color="#17becf")
+        bx10.plot(times, np.abs(h("n_dn_site0_trotter") - q("n_dn_site0_trotter")), label="|Δn_dn0|", color="#9467bd")
+        bx10.set_title("|Δn_up0(t)| and |Δn_dn0(t)|")
         bx10.set_xlabel("Time")
         bx10.grid(alpha=0.25)
         bx10.legend(fontsize=8)
 
         bx11.plot(times, np.abs(h("doublon_trotter") - q("doublon_trotter")), color="#8c564b")
-        bx11.set_title("|delta doublon_trotter|")
+        bx11.set_title("|ΔD(t)|")
         bx11.set_xlabel("Time")
         bx11.grid(alpha=0.25)
 
         fig2.suptitle(f"Delta Diagnostics L={L}", fontsize=14)
-        fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+        fig2.text(
+            0.5, 0.93,
+            "ΔX(t) = |X_hc(t) − X_qk(t)|, where X_pipeline(t) is that pipeline's stored trajectory value.",
+            ha="center", fontsize=8, style="italic",
+        )
+        fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.91))
         pdf.savefig(fig2)
         plt.close(fig2)
 
@@ -705,32 +712,39 @@ def _write_comparison_pages_into_pdf(
     pdf.savefig(figv)
     plt.close(figv)
 
-    fig2, axes2 = plt.subplots(2, 2, figsize=(11.0, 8.5), sharex=True)
+    fig2, axes2 = plt.subplots(2, 2, figsize=(11.0, 8.5))
     bx00, bx01 = axes2[0, 0], axes2[0, 1]
     bx10, bx11 = axes2[1, 0], axes2[1, 1]
 
     bx00.plot(times, np.abs(h("fidelity") - q("fidelity")), color="#1f77b4")
-    bx00.set_title("|delta fidelity|")
+    bx00.set_title("|ΔF(t)|")
+    bx00.set_xlabel("Time")
     bx00.grid(alpha=0.25)
 
     bx01.plot(times, np.abs(h("energy_trotter") - q("energy_trotter")), color="#d62728")
-    bx01.set_title("|delta energy_trotter|")
+    bx01.set_title("|ΔE_trot(t)|")
+    bx01.set_xlabel("Time")
     bx01.grid(alpha=0.25)
 
-    bx10.plot(times, np.abs(h("n_up_site0_trotter") - q("n_up_site0_trotter")), label="|delta n_up0|", color="#17becf")
-    bx10.plot(times, np.abs(h("n_dn_site0_trotter") - q("n_dn_site0_trotter")), label="|delta n_dn0|", color="#9467bd")
-    bx10.set_title("|delta occupations|")
+    bx10.plot(times, np.abs(h("n_up_site0_trotter") - q("n_up_site0_trotter")), label="|Δn_up0|", color="#17becf")
+    bx10.plot(times, np.abs(h("n_dn_site0_trotter") - q("n_dn_site0_trotter")), label="|Δn_dn0|", color="#9467bd")
+    bx10.set_title("|Δn_up0(t)| and |Δn_dn0(t)|")
     bx10.set_xlabel("Time")
     bx10.grid(alpha=0.25)
     bx10.legend(fontsize=8)
 
     bx11.plot(times, np.abs(h("doublon_trotter") - q("doublon_trotter")), color="#8c564b")
-    bx11.set_title("|delta doublon_trotter|")
+    bx11.set_title("|ΔD(t)|")
     bx11.set_xlabel("Time")
     bx11.grid(alpha=0.25)
 
     fig2.suptitle(f"Bundle Delta Diagnostics L={L}", fontsize=14)
-    fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.95))
+    fig2.text(
+        0.5, 0.93,
+        "ΔX(t) = |X_hc(t) − X_qk(t)|, where X_pipeline(t) is that pipeline's stored trajectory value.",
+        ha="center", fontsize=8, style="italic",
+    )
+    fig2.tight_layout(rect=(0.0, 0.02, 1.0, 0.91))
     pdf.savefig(fig2)
     plt.close(fig2)
 
