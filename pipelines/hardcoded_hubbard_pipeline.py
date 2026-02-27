@@ -38,7 +38,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pydephasing.quantum.hartree_fock_reference_state import hartree_fock_statevector
-from pydephasing.quantum.hubbard_latex_python_pairs import build_hubbard_hamiltonian
+from pydephasing.quantum.hubbard_latex_python_pairs import (
+    build_hubbard_hamiltonian,
+    build_hubbard_holstein_hamiltonian,
+)
 
 
 PAULI_MATS = {
@@ -223,7 +226,13 @@ def _load_hardcoded_vqe_namespace() -> dict[str, Any]:
         "half_filled_num_particles",
         "hartree_fock_bitstring",
         "basis_state",
+        "HubbardTermwiseAnsatz",
         "HardcodedUCCSDAnsatz",
+        "HubbardLayerwiseAnsatz",
+        "HubbardHolsteinLayerwiseAnsatz",
+        "HardcodedUCCSDLayerwiseAnsatz",
+        "hubbard_holstein_reference_state",
+        "exact_ground_energy_sector",
         "vqe_minimize",
     ]
     missing = [name for name in required if name not in ns]
@@ -237,6 +246,15 @@ def _run_hardcoded_vqe(
     num_sites: int,
     ordering: str,
     h_poly: Any,
+    ansatz_name: str,
+    t: float,
+    u: float,
+    dv: float,
+    boundary: str,
+    omega0: float,
+    g_ep: float,
+    n_ph_max: int,
+    boson_encoding: str,
     reps: int,
     restarts: int,
     seed: int,
@@ -245,18 +263,79 @@ def _run_hardcoded_vqe(
     ns = _load_hardcoded_vqe_namespace()
     num_particles = tuple(ns["half_filled_num_particles"](int(num_sites)))
     hf_bits = str(ns["hartree_fock_bitstring"](n_sites=int(num_sites), num_particles=num_particles, indexing=ordering))
-    nq = 2 * int(num_sites)
-    psi_ref = np.asarray(ns["basis_state"](nq, hf_bits), dtype=complex)
 
-    ansatz = ns["HardcodedUCCSDAnsatz"](
-        dims=int(num_sites),
-        num_particles=num_particles,
-        reps=int(reps),
-        repr_mode="JW",
-        indexing=ordering,
-        include_singles=True,
-        include_doubles=True,
-    )
+    ansatz_name_s = str(ansatz_name).lower()
+    if ansatz_name_s == "uccsd":
+        nq = 2 * int(num_sites)
+        psi_ref = np.asarray(ns["basis_state"](nq, hf_bits), dtype=complex)
+        ansatz = ns["HardcodedUCCSDLayerwiseAnsatz"](
+            dims=int(num_sites),
+            num_particles=num_particles,
+            reps=int(reps),
+            repr_mode="JW",
+            indexing=ordering,
+            include_singles=True,
+            include_doubles=True,
+        )
+        method_name = "hardcoded_uccsd_notebook_statevector"
+    elif ansatz_name_s == "hva":
+        nq = 2 * int(num_sites)
+        psi_ref = np.asarray(ns["basis_state"](nq, hf_bits), dtype=complex)
+        ansatz = ns["HubbardLayerwiseAnsatz"](
+            dims=int(num_sites),
+            t=float(t),
+            U=float(u),
+            v=float(dv),
+            reps=int(reps),
+            repr_mode="JW",
+            indexing=ordering,
+            pbc=(str(boundary) == "periodic"),
+            include_potential_terms=True,
+        )
+        method_name = "hardcoded_hva_notebook_statevector"
+    elif ansatz_name_s == "hh_hva":
+        ansatz = ns["HubbardHolsteinLayerwiseAnsatz"](
+            dims=int(num_sites),
+            J=float(t),
+            U=float(u),
+            omega0=float(omega0),
+            g=float(g_ep),
+            n_ph_max=int(n_ph_max),
+            boson_encoding=str(boson_encoding),
+            v=float(dv),
+            v_t=None,
+            v0=None,
+            t_eval=None,
+            reps=int(reps),
+            repr_mode="JW",
+            indexing=ordering,
+            pbc=(str(boundary) == "periodic"),
+            include_zero_point=True,
+        )
+        psi_ref = np.asarray(
+            ns["hubbard_holstein_reference_state"](
+                dims=int(num_sites),
+                num_particles=num_particles,
+                n_ph_max=int(n_ph_max),
+                boson_encoding=str(boson_encoding),
+                indexing=ordering,
+            ),
+            dtype=complex,
+        )
+        method_name = "hardcoded_hh_hva_notebook_statevector"
+    else:
+        raise ValueError(f"Unsupported ansatz '{ansatz_name}'. Expected one of: uccsd, hva, hh_hva.")
+
+    expected_nq = int(getattr(ansatz, "nq", int(round(math.log2(psi_ref.size)))))
+    if int(psi_ref.size) != (1 << expected_nq):
+        raise ValueError("Reference-state size is inconsistent with ansatz qubit register.")
+    h_terms = list(h_poly.return_polynomial())
+    if h_terms:
+        h_nq = int(h_terms[0].nqubit())
+        if h_nq != expected_nq:
+            raise ValueError(
+                f"Hamiltonian/ansatz qubit mismatch: H has {h_nq} qubits, ansatz expects {expected_nq}."
+            )
 
     result = ns["vqe_minimize"](
         h_poly,
@@ -271,11 +350,22 @@ def _run_hardcoded_vqe(
     theta = np.asarray(result.theta, dtype=float)
     psi_vqe = np.asarray(ansatz.prepare_state(theta, psi_ref), dtype=complex).reshape(-1)
     psi_vqe = _normalize_state(psi_vqe)
+    exact_filtered_energy = float(
+        ns["exact_ground_energy_sector"](
+            h_poly,
+            num_sites=int(num_sites),
+            num_particles=num_particles,
+            indexing=ordering,
+        )
+    )
 
     payload = {
         "success": True,
-        "method": "hardcoded_uccsd_notebook_statevector",
+        "method": method_name,
+        "ansatz": ansatz_name_s,
+        "parameterization": "layerwise",
         "energy": float(result.energy),
+        "exact_filtered_energy": exact_filtered_energy,
         "best_restart": int(getattr(result, "best_restart", 0)),
         "nfev": int(getattr(result, "nfev", 0)),
         "nit": int(getattr(result, "nit", 0)),
@@ -506,7 +596,7 @@ def _simulate_trajectory(
     if int(suzuki_order) != 2:
         raise ValueError("This script currently supports suzuki_order=2 only.")
 
-    nq = 2 * int(num_sites)
+    nq = int(len(ordered_labels_exyz[0])) if ordered_labels_exyz else int(round(math.log2(psi0.size)))
     evals, evecs = np.linalg.eigh(hmat)
     evecs_dag = np.conjugate(evecs).T
 
@@ -673,6 +763,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--vqe-restarts", type=int, default=1)
     parser.add_argument("--vqe-seed", type=int, default=7)
     parser.add_argument("--vqe-maxiter", type=int, default=120)
+    parser.add_argument("--vqe-ansatz", choices=["uccsd", "hva", "hh_hva"], default="uccsd")
+    parser.add_argument("--omega0", type=float, default=0.0, help="Holstein phonon frequency omega0.")
+    parser.add_argument("--g-ep", type=float, default=0.0, help="Holstein electron-phonon coupling g.")
+    parser.add_argument("--n-ph-max", type=int, default=1, help="Local phonon cutoff n_ph_max (d=n_ph_max+1).")
+    parser.add_argument("--boson-encoding", choices=["binary"], default="binary")
 
     parser.add_argument("--qpe-eval-qubits", type=int, default=6)
     parser.add_argument("--qpe-shots", type=int, default=1024)
@@ -695,15 +790,35 @@ def main() -> None:
     output_json = args.output_json or (artifacts_dir / f"hardcoded_pipeline_L{args.L}.json")
     output_pdf = args.output_pdf or (artifacts_dir / f"hardcoded_pipeline_L{args.L}.pdf")
 
-    h_poly = build_hubbard_hamiltonian(
-        dims=int(args.L),
-        t=float(args.t),
-        U=float(args.u),
-        v=float(args.dv),
-        repr_mode="JW",
-        indexing=str(args.ordering),
-        pbc=(str(args.boundary) == "periodic"),
-    )
+    if str(args.vqe_ansatz).lower() == "hh_hva":
+        h_poly = build_hubbard_holstein_hamiltonian(
+            dims=int(args.L),
+            J=float(args.t),
+            U=float(args.u),
+            omega0=float(args.omega0),
+            g=float(args.g_ep),
+            n_ph_max=int(args.n_ph_max),
+            boson_encoding=str(args.boson_encoding),
+            # CLI dv convention here is Hv = -dv * n, so map to HH drive
+            # H_drive = (v_t - v0) * n by using v_t=0, v0=dv.
+            v_t=0.0,
+            v0=float(args.dv),
+            t_eval=None,
+            repr_mode="JW",
+            indexing=str(args.ordering),
+            pbc=(str(args.boundary) == "periodic"),
+            include_zero_point=True,
+        )
+    else:
+        h_poly = build_hubbard_hamiltonian(
+            dims=int(args.L),
+            t=float(args.t),
+            U=float(args.u),
+            v=float(args.dv),
+            repr_mode="JW",
+            indexing=str(args.ordering),
+            pbc=(str(args.boundary) == "periodic"),
+        )
 
     native_order, coeff_map_exyz = _collect_hardcoded_terms_exyz(h_poly)
     if args.term_order == "native":
@@ -723,6 +838,15 @@ def main() -> None:
             num_sites=int(args.L),
             ordering=str(args.ordering),
             h_poly=h_poly,
+            ansatz_name=str(args.vqe_ansatz),
+            t=float(args.t),
+            u=float(args.u),
+            dv=float(args.dv),
+            boundary=str(args.boundary),
+            omega0=float(args.omega0),
+            g_ep=float(args.g_ep),
+            n_ph_max=int(args.n_ph_max),
+            boson_encoding=str(args.boson_encoding),
             reps=int(args.vqe_reps),
             restarts=int(args.vqe_restarts),
             seed=int(args.vqe_seed),
@@ -731,19 +855,37 @@ def main() -> None:
     except Exception as exc:
         vqe_payload = {
             "success": False,
-            "method": "hardcoded_uccsd_notebook_statevector",
+            "method": f"hardcoded_{str(args.vqe_ansatz)}_notebook_statevector",
+            "ansatz": str(args.vqe_ansatz),
+            "parameterization": "layerwise",
             "energy": None,
+            "exact_filtered_energy": None,
             "error": str(exc),
         }
         psi_vqe = psi_exact_ground
 
     num_particles = _half_filled_particles(int(args.L))
-    psi_hf = _normalize_state(
-        np.asarray(
-            hartree_fock_statevector(int(args.L), num_particles, indexing=str(args.ordering)),
-            dtype=complex,
-        ).reshape(-1)
-    )
+    if str(args.vqe_ansatz).lower() == "hh_hva":
+        ns = _load_hardcoded_vqe_namespace()
+        psi_hf = _normalize_state(
+            np.asarray(
+                ns["hubbard_holstein_reference_state"](
+                    dims=int(args.L),
+                    num_particles=num_particles,
+                    n_ph_max=int(args.n_ph_max),
+                    boson_encoding=str(args.boson_encoding),
+                    indexing=str(args.ordering),
+                ),
+                dtype=complex,
+            ).reshape(-1)
+        )
+    else:
+        psi_hf = _normalize_state(
+            np.asarray(
+                hartree_fock_statevector(int(args.L), num_particles, indexing=str(args.ordering)),
+                dtype=complex,
+            ).reshape(-1)
+        )
 
     if args.initial_state_source == "vqe" and bool(vqe_payload.get("success", False)):
         psi0 = psi_vqe
@@ -806,6 +948,10 @@ def main() -> None:
             "t": float(args.t),
             "u": float(args.u),
             "dv": float(args.dv),
+            "omega0": float(args.omega0),
+            "g_ep": float(args.g_ep),
+            "n_ph_max": int(args.n_ph_max),
+            "boson_encoding": str(args.boson_encoding),
             "boundary": str(args.boundary),
             "ordering": str(args.ordering),
             "t_final": float(args.t_final),
@@ -813,11 +959,12 @@ def main() -> None:
             "suzuki_order": int(args.suzuki_order),
             "trotter_steps": int(args.trotter_steps),
             "term_order": str(args.term_order),
+            "vqe_ansatz": str(args.vqe_ansatz),
             "initial_state_source": str(args.initial_state_source),
             "skip_qpe": bool(args.skip_qpe),
         },
         "hamiltonian": {
-            "num_qubits": int(2 * args.L),
+            "num_qubits": int(len(ordered_labels_exyz[0]) if ordered_labels_exyz else int(round(math.log2(hmat.shape[0])))),
             "num_terms": int(len(coeff_map_exyz)),
             "coefficients_exyz": [
                 {

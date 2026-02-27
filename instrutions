@@ -1,0 +1,64 @@
+# CODEX TERMINAL AGENT — IMPLEMENT HUBBARD–HOLSTEIN BUILDERS (PauliPolynomial)
+
+Repository context:
+- There already exist Hubbard builders returning `PauliPolynomial`:
+  - `build_hubbard_kinetic(...)`
+  - `build_hubbard_onsite(...)`
+  - `build_hubbard_potential(...)`
+  - `build_hubbard_hamiltonian(...)`
+
+Target Hamiltonian to support (qubit-mapped):
+  H = -J Σ_{<i,j>,σ} (c†_{iσ} c_{jσ} + h.c.)
+      + U Σ_i n_{i↑} n_{i↓}
+      + ω0 Σ_i (b†_i b_i + 1/2)                         [confirm constant convention]
+      + g Σ_i (b†_i + b_i) (n_i - 1)
+      + Σ_{i,σ} (v_i(t) - v_i^(0)) n_{iσ}
+
+Deliverables:
+1) Extend Hubbard builders to be embeddable into a larger qubit register (fermions + phonons):
+   - Add optional parameter `nq_override: Optional[int] = None` (or equivalent) to:
+     - `build_hubbard_kinetic`
+     - `build_hubbard_onsite`
+     - `build_hubbard_potential`
+     - `build_hubbard_hamiltonian`
+   - Backward compatible: existing calls behave identically when `nq_override is None`.
+   - Requirement: if `nq_override` is provided, ensure `nq_override >= 2*n_sites`.
+
+2) Introduce phonon (Holstein) degrees of freedom with a *local truncation*:
+   - Choose local phonon dimension: d = n_ph_max + 1
+   - Choose encoding: <insert needed information here> (recommended default: "binary")
+   - For each site i, allocate `qpb` qubits for phonons, so:
+        n_ferm_qubits = 2 * n_sites
+        n_bos_qubits  = n_sites * qpb
+        n_total       = n_ferm_qubits + n_bos_qubits
+
+3) Implement bosonic operator → PauliPolynomial mapping (truncated oscillator):
+   - Build local matrices on d-level Fock space:
+       b|n> = sqrt(n) |n-1>,  b†|n> = sqrt(n+1) |n+1>,  n = b†b,  x = b + b†
+   - Embed into 2^qpb space if needed (binary encoding), by padding with zeros.
+   - Decompose local operator into Pauli basis on qpb qubits.
+   - Cache the resulting local PauliPolynomial(s) per (n_ph_max, encoding, tol) and reuse for all sites.
+
+4) Add new builders:
+   - `build_holstein_phonon_energy(...)`  → ω0 Σ_i (n_b,i + 1/2)
+   - `build_holstein_coupling(...)`       → g Σ_i (x_i)(n_i - 1)   where x_i = b_i + b†_i
+   - `build_hubbard_holstein_drive(...)`  → Σ_{i,σ} (v_i(t) - v0_i) n_{iσ}
+   - `build_hubbard_holstein_hamiltonian(...)` → Hubbard + Holstein + drive
+
+5) Integration constraints:
+   - All returned PauliPolynomials must act on the same `n_total` qubits so they can be summed.
+   - Fermionic operators are still JW (or chosen repr_mode) and occupy qubits [0 .. 2*n_sites-1].
+   - Phonon qubits occupy [2*n_sites .. 2*n_sites + n_sites*qpb - 1], grouped by site.
+
+6) Tests:
+   - Add unit tests verifying:
+     - qubit count / register layout
+     - hermiticity of each new term and total H
+     - reduction to Hubbard when ω0=0 and g=0 and no drive
+     - basic spot-check of 1-site case against exact small matrix (optional)
+
+Implementation notes:
+- Use search-based insertion points, not line numbers:
+  - Search for `def build_hubbard_hamiltonian` and add new HH builders below it (or in a new module).
+- Keep the caching style consistent with existing code (dict caches keyed by mode/site).
+- Leave placeholders `<insert needed information here>` unfilled; do not invent repo-specific APIs.

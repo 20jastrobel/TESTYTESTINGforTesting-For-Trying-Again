@@ -15,6 +15,7 @@ The priority is **correctness and consistency of operator conventions**, not “
 ### Pauli symbols
 - Use `e/x/y/z` internally (`e` = identity)
 - If you need I/X/Y/Z output for reports, convert at the boundaries only.
+- Unless the script is running too long because of a bug/issue, never interrupt or stop a run/script because you think it is taking too long or unrealistic run-time-wise.
 
 ### Pauli-string qubit ordering
 - Pauli word string is ordered:
@@ -135,9 +136,3 @@ Qiskit baseline scripts may be used to sanity check, but they are not the core t
 ---
 
 ## 7) Suggested next implementation steps (for agents)
-1. Replace `quantum_eigensolver.py` stub with a hardcoded VQE driver calling into a dedicated VQE module.
-2. Add a VQE literate module (LaTeX+Python pairs) mirroring the Hubbard pairs pattern.
-3. Add a small regression runner that:
-   - builds H for L=2,3 (blocked & interleaved)
-   - compares canonical Pauli dictionaries vs existing JSON references
-   - runs hardcoded VQE and compares energy to exact filtered diagonalization for small sizes.

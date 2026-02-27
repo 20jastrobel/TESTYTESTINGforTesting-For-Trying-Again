@@ -17,6 +17,10 @@ cd "/Users/jakestrobel/Downloads/Testing-For-Trying-Again-main_copy-testforatest
   - Qiskit Hamiltonian, Qiskit VQE, Qiskit dynamics.
 - `pipelines/compare_hardcoded_vs_qiskit_pipeline.py`
   - Runs both pipelines (or reads existing JSON), compares metrics, writes PDFs.
+- `pipelines/compare_hva_uccsd_qiskit_pipeline.py`
+  - Runs hardcoded-HVA, hardcoded-UCCSD, and Qiskit-UCCSD (or reads existing JSON), compares metrics, writes PDFs.
+- `pipelines/run_hva_uccsd_qiskit_L2_L3.sh`
+  - Regression-grade reproducible run for `L=2,3` with per-L and bundled comparison artifacts.
 
 ## State Source Behavior
 
@@ -49,6 +53,8 @@ VQE controls:
 - `--vqe-restarts` / `--hardcoded-vqe-restarts` / `--qiskit-vqe-restarts`
 - `--vqe-maxiter` / `--hardcoded-vqe-maxiter` / `--qiskit-vqe-maxiter`
 - `--vqe-seed` / `--hardcoded-vqe-seed` / `--qiskit-vqe-seed`
+- `--vqe-ansatz` (hardcoded pipeline only): `uccsd` or `hva`
+  - Both flags now use layer-wise parameterization internally (legacy term-wise classes are still available in the VQE module for compatibility).
 
 QPE controls:
 
@@ -76,6 +82,7 @@ Defaults:
 - `--t-final 20.0 --num-times 201 --suzuki-order 2 --trotter-steps 64`
 - `--term-order sorted` (`native|sorted`)
 - `--vqe-reps 1 --vqe-restarts 1 --vqe-seed 7 --vqe-maxiter 120`
+- `--vqe-ansatz uccsd` (`uccsd|hva`)
 - `--qpe-eval-qubits 6 --qpe-shots 1024 --qpe-seed 11`
 - `--initial-state-source exact` (`exact|vqe|hf`)
 
@@ -114,6 +121,24 @@ Defaults:
 - `--initial-state-source vqe` (`exact|vqe|hf`)
 - `--artifacts-dir artifacts`
 
+### HVA/UCCSD/Qiskit compare runner
+
+```bash
+/opt/anaconda3/bin/python pipelines/compare_hva_uccsd_qiskit_pipeline.py --help
+```
+
+Defaults:
+
+- `--l-values 2,3`
+- `--run-pipelines` (use `--no-run-pipelines` to reuse JSONs)
+- `--t 1.0 --u 4.0 --dv 0.0`
+- `--boundary periodic --ordering blocked`
+- `--t-final 20.0 --num-times 201 --suzuki-order 2 --trotter-steps 64`
+- `--hardcoded-vqe-reps 2 --hardcoded-vqe-restarts 3 --hardcoded-vqe-seed 7 --hardcoded-vqe-maxiter 600`
+- `--qiskit-vqe-reps 2 --qiskit-vqe-restarts 3 --qiskit-vqe-seed 7 --qiskit-vqe-maxiter 600`
+- `--initial-state-source vqe` (`exact|vqe|hf`)
+- `--artifacts-dir artifacts`
+
 ## Common Commands
 
 ### 1) Run full compare for L=2,3,4 with locked heavy settings
@@ -145,9 +170,9 @@ Defaults:
 
 ```bash
 /opt/anaconda3/bin/python pipelines/hardcoded_hubbard_pipeline.py \
-  --L 3 --initial-state-source vqe \
-  --output-json artifacts/hardcoded_pipeline_L3.json \
-  --output-pdf artifacts/hardcoded_pipeline_L3.pdf
+  --L 3 --vqe-ansatz hva --initial-state-source vqe \
+  --output-json artifacts/hardcoded_hva_pipeline_L3.json \
+  --output-pdf artifacts/hardcoded_hva_pipeline_L3.pdf
 ```
 
 ### 4) Run Qiskit baseline only
@@ -159,7 +184,25 @@ Defaults:
   --output-pdf artifacts/qiskit_pipeline_L3.pdf
 ```
 
-### 5) Run the L=2/L=3 regression harness
+### 5) Run 3-way HVA/UCCSD/Qiskit compare directly (L=2,3)
+
+```bash
+/opt/anaconda3/bin/python pipelines/compare_hva_uccsd_qiskit_pipeline.py \
+  --l-values 2,3 \
+  --t 1.0 --u 4.0 --dv 0.0 --boundary periodic --ordering blocked \
+  --initial-state-source vqe \
+  --skip-qpe \
+  --with-per-l-pdfs \
+  --artifacts-dir artifacts
+```
+
+### 6) Run reproducible regression-grade L=2/L=3 harness
+
+```bash
+bash pipelines/run_hva_uccsd_qiskit_L2_L3.sh
+```
+
+### 7) Run the original hardcoded-vs-qiskit regression harness
 
 ```bash
 bash pipelines/regression_L2_L3.sh
@@ -168,7 +211,7 @@ bash pipelines/regression_L2_L3.sh
 This writes `_reg` JSON/PDF outputs for L=2 and L=3, runs the compare runner, runs
 `manual_compare_jsons.py`, and ends with `REGRESSION PASS` or `REGRESSION FAIL`.
 
-### 6) Manual JSON-vs-JSON consistency check
+### 8) Manual JSON-vs-JSON consistency check
 
 ```bash
 /opt/anaconda3/bin/python pipelines/manual_compare_jsons.py \
@@ -187,7 +230,14 @@ Under `artifacts/`:
 - `hardcoded_vs_qiskit_pipeline_L{L}_comparison.pdf`
 - `hardcoded_vs_qiskit_pipeline_summary.json`
 - `hardcoded_vs_qiskit_all_results_bundle.pdf`
+- `hardcoded_hva_pipeline_L{L}.json`
+- `hardcoded_uccsd_pipeline_L{L}.json`
+- `hva_uccsd_qiskit_L{L}_metrics.json`
+- `hva_uccsd_qiskit_L{L}_comparison.pdf`
+- `hva_uccsd_qiskit_summary.json`
+- `hva_uccsd_qiskit_bundle.pdf`
 - `pipeline_commands_run.txt`
+- `hva_uccsd_qiskit_commands_run.txt`
 
 VQE visibility:
 

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import inspect
 import itertools
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
+import math
+from functools import lru_cache
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Union
+
+import numpy as np
 
 try:
     from IPython.display import Markdown, Math, display
@@ -49,6 +53,15 @@ except Exception:  # pragma: no cover - local fallback when utilities package is
 
 Spin = int  # 0 -> up, 1 -> down
 Dims = Union[int, Tuple[int, ...]]  # L or (Lx, Ly, ...)
+SitePotential = Optional[Union[float, Sequence[float], Dict[int, float]]]
+TimePotential = Optional[
+    Union[
+        float,
+        Sequence[float],
+        Dict[int, float],
+        Callable[[Optional[float]], Union[float, Sequence[float], Dict[int, float]]],
+    ]
+]
 
 SPIN_UP: Spin = 0
 SPIN_DN: Spin = 1
@@ -223,6 +236,16 @@ def jw_number_operator(repr_mode: str, nq: int, p_mode: int) -> PauliPolynomial:
     )
 
 
+def _resolve_hubbard_nq(n_sites: int, nq_override: Optional[int]) -> int:
+    nq_min = 2 * int(n_sites)
+    if nq_override is None:
+        return nq_min
+    nq = int(nq_override)
+    if nq < nq_min:
+        log.error("nq_override must be >= 2*n_sites")
+    return nq
+
+
 def build_hubbard_kinetic(
     dims: Dims,
     t: float,
@@ -231,10 +254,11 @@ def build_hubbard_kinetic(
     indexing: str = "interleaved",
     edges: Optional[Sequence[Tuple[int, int]]] = None,
     pbc: Union[bool, Sequence[bool]] = True,
+    nq_override: Optional[int] = None,
 ) -> PauliPolynomial:
     """Hopping term H_t."""
     n_sites = n_sites_from_dims(dims)
-    nq = 2 * n_sites
+    nq = _resolve_hubbard_nq(n_sites=n_sites, nq_override=nq_override)
     if edges is None:
         edges = bravais_nearest_neighbor_edges(dims, pbc=pbc)
 
@@ -268,10 +292,11 @@ def build_hubbard_onsite(
     *,
     repr_mode: str = "JW",
     indexing: str = "interleaved",
+    nq_override: Optional[int] = None,
 ) -> PauliPolynomial:
     """Onsite interaction term H_U."""
     n_sites = n_sites_from_dims(dims)
-    nq = 2 * n_sites
+    nq = _resolve_hubbard_nq(n_sites=n_sites, nq_override=nq_override)
 
     n_cache: Dict[int, PauliPolynomial] = {}
 
@@ -291,7 +316,7 @@ def build_hubbard_onsite(
 
 
 def _parse_site_potential(
-    v: Optional[Union[float, Sequence[float], Dict[int, float]]],
+    v: SitePotential,
     n_sites: int,
 ) -> List[float]:
     if v is None:
@@ -313,14 +338,15 @@ def _parse_site_potential(
 
 def build_hubbard_potential(
     dims: Dims,
-    v: Optional[Union[float, Sequence[float], Dict[int, float]]],
+    v: SitePotential,
     *,
     repr_mode: str = "JW",
     indexing: str = "interleaved",
+    nq_override: Optional[int] = None,
 ) -> PauliPolynomial:
     """Local potential term H_v."""
     n_sites = n_sites_from_dims(dims)
-    nq = 2 * n_sites
+    nq = _resolve_hubbard_nq(n_sites=n_sites, nq_override=nq_override)
     v_list = _parse_site_potential(v, n_sites=n_sites)
 
     n_cache: Dict[int, PauliPolynomial] = {}
@@ -347,11 +373,12 @@ def build_hubbard_hamiltonian(
     t: float,
     U: float,
     *,
-    v: Optional[Union[float, Sequence[float], Dict[int, float]]] = None,
+    v: SitePotential = None,
     repr_mode: str = "JW",
     indexing: str = "interleaved",
     edges: Optional[Sequence[Tuple[int, int]]] = None,
     pbc: Union[bool, Sequence[bool]] = True,
+    nq_override: Optional[int] = None,
 ) -> PauliPolynomial:
     """Full Hamiltonian H = H_t + H_U + H_v."""
     Ht = build_hubbard_kinetic(
@@ -361,20 +388,468 @@ def build_hubbard_hamiltonian(
         indexing=indexing,
         edges=edges,
         pbc=pbc,
+        nq_override=nq_override,
     )
     HU = build_hubbard_onsite(
         dims=dims,
         U=U,
         repr_mode=repr_mode,
         indexing=indexing,
+        nq_override=nq_override,
     )
     Hv = build_hubbard_potential(
         dims=dims,
         v=v,
         repr_mode=repr_mode,
         indexing=indexing,
+        nq_override=nq_override,
     )
     return Ht + HU + Hv
+
+
+def boson_qubits_per_site(n_ph_max: int, encoding: str = "binary") -> int:
+    """Return qubits-per-site for a local truncated phonon Hilbert space."""
+    n_ph_i = int(n_ph_max)
+    if n_ph_i < 0:
+        log.error("n_ph_max must be >= 0")
+    d = n_ph_i + 1
+    if encoding == "binary":
+        return max(1, int(math.ceil(math.log2(d))))
+    log.error("unknown boson encoding")
+    return max(1, int(math.ceil(math.log2(d))))
+
+
+def phonon_qubit_indices_for_site(
+    site: int,
+    *,
+    n_sites: int,
+    qpb: int,
+    fermion_qubits: int,
+) -> List[int]:
+    """Global phonon qubits for one site in the packed [fermions][phonons] layout."""
+    site_i = int(site)
+    n_sites_i = int(n_sites)
+    qpb_i = int(qpb)
+    fermion_q_i = int(fermion_qubits)
+
+    if n_sites_i <= 0:
+        log.error("n_sites must be positive")
+    if site_i < 0 or site_i >= n_sites_i:
+        log.error("site index out of bounds")
+    if qpb_i <= 0:
+        log.error("qpb must be positive")
+    if fermion_q_i < 0:
+        log.error("fermion_qubits must be >= 0")
+
+    base = fermion_q_i + site_i * qpb_i
+    return list(range(base, base + qpb_i))
+
+
+def _normalize_pauli_symbol(sym: str) -> str:
+    if not isinstance(sym, str) or len(sym) != 1:
+        log.error("Pauli symbol must be a single character")
+    trans = {"I": "e", "X": "x", "Y": "y", "Z": "z"}
+    if sym in trans:
+        return trans[sym]
+    out = sym.lower()
+    if out not in ("e", "x", "y", "z"):
+        log.error(f"invalid Pauli symbol '{sym}'")
+    return out
+
+
+def _identity_pauli_polynomial(repr_mode: str, nq: int) -> PauliPolynomial:
+    return PauliPolynomial(repr_mode, [PauliTerm(int(nq), ps="e" * int(nq), pc=1.0)])
+
+
+def _pauli_monomial_global(
+    repr_mode: str,
+    nq: int,
+    ops: Dict[int, str],
+) -> PauliPolynomial:
+    nq_i = int(nq)
+    chars = ["e"] * nq_i
+    for qubit, sym in ops.items():
+        q = int(qubit)
+        if q < 0 or q >= nq_i:
+            log.error("global qubit index out of range for Pauli monomial")
+        norm = _normalize_pauli_symbol(sym)
+        if norm == "e":
+            continue
+        chars[nq_i - 1 - q] = norm
+    return PauliPolynomial(repr_mode, [PauliTerm(nq_i, ps="".join(chars), pc=1.0)])
+
+
+@lru_cache(maxsize=None)
+def _boson_local_matrices(n_ph_max: int) -> Dict[str, np.ndarray]:
+    """Local truncated oscillator matrices on d = n_ph_max + 1 Fock levels."""
+    n_ph_i = int(n_ph_max)
+    if n_ph_i < 0:
+        log.error("n_ph_max must be >= 0")
+    d = n_ph_i + 1
+    b = np.zeros((d, d), dtype=np.complex128)
+    for n in range(1, d):
+        b[n - 1, n] = np.sqrt(float(n))
+    bdag = b.conj().T
+    n_op = bdag @ b
+    x_op = b + bdag
+    return {"b": b, "bdag": bdag, "n": n_op, "x": x_op}
+
+
+def _embed_to_qubit_space(mat_d: np.ndarray, qpb: int) -> np.ndarray:
+    """Zero-pad a dxd local operator into a 2^qpb dimensional qubit subspace."""
+    qpb_i = int(qpb)
+    if qpb_i <= 0:
+        log.error("qpb must be positive")
+    d = int(mat_d.shape[0])
+    if mat_d.shape != (d, d):
+        log.error("mat_d must be square")
+    dim = 1 << qpb_i
+    if d > dim:
+        log.error("local operator dimension exceeds qubit encoding dimension")
+    out = np.zeros((dim, dim), dtype=np.complex128)
+    out[:d, :d] = mat_d
+    return out
+
+
+@lru_cache(maxsize=None)
+def _pauli_basis_mats(qpb: int) -> Tuple[List[str], List[np.ndarray]]:
+    """All Pauli basis labels/matrices on qpb local qubits."""
+    qpb_i = int(qpb)
+    if qpb_i <= 0:
+        log.error("qpb must be positive")
+
+    I = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.complex128)
+    X = np.array([[0.0, 1.0], [1.0, 0.0]], dtype=np.complex128)
+    Y = np.array([[0.0, -1.0j], [1.0j, 0.0]], dtype=np.complex128)
+    Z = np.array([[1.0, 0.0], [0.0, -1.0]], dtype=np.complex128)
+    oneq = {"I": I, "X": X, "Y": Y, "Z": Z}
+
+    labels: List[str] = []
+    mats: List[np.ndarray] = []
+    for s in itertools.product("IXYZ", repeat=qpb_i):
+        lbl = "".join(s)
+        mat = oneq[s[0]]
+        for k in range(1, qpb_i):
+            mat = np.kron(mat, oneq[s[k]])
+        labels.append(lbl)
+        mats.append(mat)
+    return labels, mats
+
+
+def _matrix_to_pauli_coeffs(
+    mat: np.ndarray,
+    qpb: int,
+    tol: float,
+) -> List[Tuple[str, complex]]:
+    """Decompose mat in Pauli basis on qpb qubits."""
+    qpb_i = int(qpb)
+    labels, mats = _pauli_basis_mats(qpb_i)
+    dim = 1 << qpb_i
+    out: List[Tuple[str, complex]] = []
+    for lbl, P in zip(labels, mats):
+        coeff = np.trace(P.conj().T @ mat) / float(dim)
+        if abs(coeff) > float(tol):
+            out.append((lbl, complex(coeff)))
+    return out
+
+
+@lru_cache(maxsize=None)
+def boson_local_operator_pauli_decomp(
+    which: str,
+    *,
+    n_ph_max: int,
+    qpb: int,
+    tol: float,
+) -> List[Tuple[str, complex]]:
+    """Cached local Pauli decomposition for boson operators on one site."""
+    if which not in ("b", "bdag", "n", "x"):
+        log.error("which must be one of: 'b', 'bdag', 'n', 'x'")
+    mats = _boson_local_matrices(int(n_ph_max))
+    mat_d = mats[which]
+    mat_q = _embed_to_qubit_space(mat_d, qpb=int(qpb))
+    return _matrix_to_pauli_coeffs(mat_q, qpb=int(qpb), tol=float(tol))
+
+
+def boson_operator(
+    repr_mode: str,
+    nq_total: int,
+    qubits: Sequence[int],
+    *,
+    which: str,
+    n_ph_max: int,
+    encoding: str,
+    tol: float = 1e-12,
+) -> PauliPolynomial:
+    """Bosonic operator embedded on selected global qubits (binary encoding)."""
+    if encoding != "binary":
+        log.error("only binary boson encoding is implemented")
+
+    qubits_i = [int(q) for q in qubits]
+    if len(set(qubits_i)) != len(qubits_i):
+        log.error("qubits for boson operator must be unique")
+    qpb = len(qubits_i)
+    if qpb <= 0:
+        log.error("boson operator needs at least one qubit")
+
+    expected_qpb = boson_qubits_per_site(int(n_ph_max), encoding=encoding)
+    if qpb != expected_qpb:
+        log.error("provided local boson qubit block does not match encoding size")
+
+    terms = boson_local_operator_pauli_decomp(
+        which,
+        n_ph_max=int(n_ph_max),
+        qpb=qpb,
+        tol=float(tol),
+    )
+
+    H = PauliPolynomial(repr_mode)
+    for lbl, coeff in terms:
+        ops: Dict[int, str] = {}
+        # Local matrix labels are ordered left->right as q_(qpb-1)...q_0.
+        # Map to global qubits so the rightmost local char acts on qubits_i[0].
+        for local_k, P in enumerate(lbl):
+            if P == "I":
+                continue
+            global_q = qubits_i[qpb - 1 - local_k]
+            ops[global_q] = P
+        H += complex(coeff) * _pauli_monomial_global(repr_mode, int(nq_total), ops)
+    return H
+
+
+def boson_number_operator(
+    repr_mode: str,
+    nq_total: int,
+    qubits: Sequence[int],
+    *,
+    n_ph_max: int,
+    encoding: str = "binary",
+    tol: float = 1e-12,
+) -> PauliPolynomial:
+    return boson_operator(
+        repr_mode,
+        nq_total,
+        qubits,
+        which="n",
+        n_ph_max=n_ph_max,
+        encoding=encoding,
+        tol=tol,
+    )
+
+
+def boson_displacement_operator(
+    repr_mode: str,
+    nq_total: int,
+    qubits: Sequence[int],
+    *,
+    n_ph_max: int,
+    encoding: str = "binary",
+    tol: float = 1e-12,
+) -> PauliPolynomial:
+    return boson_operator(
+        repr_mode,
+        nq_total,
+        qubits,
+        which="x",
+        n_ph_max=n_ph_max,
+        encoding=encoding,
+        tol=tol,
+    )
+
+
+def _eval_site_potential_maybe_time_dependent(
+    v: TimePotential,
+    *,
+    t: Optional[float],
+    n_sites: int,
+) -> List[float]:
+    if v is None:
+        return [0.0] * int(n_sites)
+    if callable(v):
+        if t is None:
+            log.error("t must be provided when v_t is callable")
+        return _parse_site_potential(v(t), n_sites=int(n_sites))
+    return _parse_site_potential(v, n_sites=int(n_sites))
+
+
+def build_holstein_phonon_energy(
+    dims: Dims,
+    omega0: float,
+    *,
+    n_ph_max: int,
+    boson_encoding: str = "binary",
+    repr_mode: str = "JW",
+    tol: float = 1e-12,
+    zero_point: bool = True,
+) -> PauliPolynomial:
+    """H_ph = omega0 * sum_i (n_b,i + 1/2)."""
+    n_sites = n_sites_from_dims(dims)
+    fermion_qubits = 2 * n_sites
+    qpb = boson_qubits_per_site(int(n_ph_max), boson_encoding)
+    nq_total = fermion_qubits + n_sites * qpb
+
+    Hph = PauliPolynomial(repr_mode)
+    I = _identity_pauli_polynomial(repr_mode, nq_total)
+    for i in range(n_sites):
+        q_i = phonon_qubit_indices_for_site(
+            i,
+            n_sites=n_sites,
+            qpb=qpb,
+            fermion_qubits=fermion_qubits,
+        )
+        n_b = boson_number_operator(
+            repr_mode,
+            nq_total,
+            q_i,
+            n_ph_max=n_ph_max,
+            encoding=boson_encoding,
+            tol=tol,
+        )
+        Hph += float(omega0) * n_b
+        if zero_point:
+            Hph += (0.5 * float(omega0)) * I
+    return Hph
+
+
+def build_holstein_coupling(
+    dims: Dims,
+    g: float,
+    *,
+    n_ph_max: int,
+    boson_encoding: str = "binary",
+    repr_mode: str = "JW",
+    indexing: str = "interleaved",
+    tol: float = 1e-12,
+) -> PauliPolynomial:
+    """H_g = g * sum_i x_i * (n_i - 1), with n_i = n_{i,up} + n_{i,dn}."""
+    n_sites = n_sites_from_dims(dims)
+    fermion_qubits = 2 * n_sites
+    qpb = boson_qubits_per_site(int(n_ph_max), boson_encoding)
+    nq_total = fermion_qubits + n_sites * qpb
+
+    I = _identity_pauli_polynomial(repr_mode, nq_total)
+    Hg = PauliPolynomial(repr_mode)
+
+    n_cache: Dict[int, PauliPolynomial] = {}
+
+    def n_op(p_mode: int) -> PauliPolynomial:
+        if p_mode not in n_cache:
+            n_cache[p_mode] = jw_number_operator(repr_mode, nq_total, p_mode)
+        return n_cache[p_mode]
+
+    for i in range(n_sites):
+        p_up = mode_index(i, SPIN_UP, indexing=indexing, n_sites=n_sites)
+        p_dn = mode_index(i, SPIN_DN, indexing=indexing, n_sites=n_sites)
+        n_i = n_op(p_up) + n_op(p_dn)
+
+        q_i = phonon_qubit_indices_for_site(
+            i,
+            n_sites=n_sites,
+            qpb=qpb,
+            fermion_qubits=fermion_qubits,
+        )
+        x_i = boson_displacement_operator(
+            repr_mode,
+            nq_total,
+            q_i,
+            n_ph_max=n_ph_max,
+            encoding=boson_encoding,
+            tol=tol,
+        )
+        Hg += float(g) * (x_i * (n_i + ((-1.0) * I)))
+    return Hg
+
+
+def build_hubbard_holstein_drive(
+    dims: Dims,
+    *,
+    v_t: TimePotential,
+    v0: SitePotential,
+    t: Optional[float] = None,
+    repr_mode: str = "JW",
+    indexing: str = "interleaved",
+    nq_override: Optional[int] = None,
+) -> PauliPolynomial:
+    """H_drive = sum_{i,sigma} (v_i(t) - v0_i) n_{i,sigma}."""
+    n_sites = n_sites_from_dims(dims)
+    v_t_list = _eval_site_potential_maybe_time_dependent(v_t, t=t, n_sites=n_sites)
+    v0_list = _parse_site_potential(v0, n_sites=n_sites)
+    delta = [float(v_t_list[i]) - float(v0_list[i]) for i in range(n_sites)]
+
+    # build_hubbard_potential uses H_v = -sum_i,sigma v_i * n_i,sigma.
+    v_for_existing = [-dv for dv in delta]
+    return build_hubbard_potential(
+        dims=dims,
+        v=v_for_existing,
+        repr_mode=repr_mode,
+        indexing=indexing,
+        nq_override=nq_override,
+    )
+
+
+def build_hubbard_holstein_hamiltonian(
+    dims: Dims,
+    *,
+    J: float,
+    U: float,
+    omega0: float,
+    g: float,
+    n_ph_max: int,
+    boson_encoding: str = "binary",
+    v_t: TimePotential = None,
+    v0: SitePotential = None,
+    t_eval: Optional[float] = None,
+    repr_mode: str = "JW",
+    indexing: str = "interleaved",
+    edges: Optional[Sequence[Tuple[int, int]]] = None,
+    pbc: Union[bool, Sequence[bool]] = True,
+    tol: float = 1e-12,
+    include_zero_point: bool = True,
+) -> PauliPolynomial:
+    """Full Hubbard-Holstein Hamiltonian on a shared fermion+phonon register."""
+    n_sites = n_sites_from_dims(dims)
+    fermion_qubits = 2 * n_sites
+    qpb = boson_qubits_per_site(int(n_ph_max), boson_encoding)
+    nq_total = fermion_qubits + n_sites * qpb
+
+    H_hubb = build_hubbard_hamiltonian(
+        dims=dims,
+        t=J,
+        U=U,
+        v=None,
+        repr_mode=repr_mode,
+        indexing=indexing,
+        edges=edges,
+        pbc=pbc,
+        nq_override=nq_total,
+    )
+    H_ph = build_holstein_phonon_energy(
+        dims=dims,
+        omega0=omega0,
+        n_ph_max=n_ph_max,
+        boson_encoding=boson_encoding,
+        repr_mode=repr_mode,
+        tol=tol,
+        zero_point=include_zero_point,
+    )
+    H_g = build_holstein_coupling(
+        dims=dims,
+        g=g,
+        n_ph_max=n_ph_max,
+        boson_encoding=boson_encoding,
+        repr_mode=repr_mode,
+        indexing=indexing,
+        tol=tol,
+    )
+    H_drive = build_hubbard_holstein_drive(
+        dims=dims,
+        v_t=v_t,
+        v0=v0,
+        t=t_eval,
+        repr_mode=repr_mode,
+        indexing=indexing,
+        nq_override=nq_total,
+    )
+    return H_hubb + H_ph + H_g + H_drive
 
 
 def show_latex_and_code(title: str, latex_expr: str, fn) -> None:

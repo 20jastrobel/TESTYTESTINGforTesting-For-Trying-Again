@@ -1,0 +1,56 @@
+{
+  "generated_utc": "2026-02-26T17:54:00.461878+00:00",
+  "description": "Hardcoded HVA vs hardcoded UCCSD vs Qiskit UCCSD comparison.",
+  "l_values": [
+    2,
+    3
+  ],
+  "requested_run_settings": {
+    "t": 1.0,
+    "u": 4.0,
+    "dv": 0.0,
+    "boundary": "periodic",
+    "ordering": "blocked",
+    "t_final": 20.0,
+    "num_times": 401,
+    "suzuki_order": 2,
+    "trotter_steps": 128,
+    "hardcoded_vqe_reps": 3,
+    "hardcoded_vqe_restarts": 6,
+    "hardcoded_vqe_seed": 7,
+    "hardcoded_vqe_maxiter": 2200,
+    "qiskit_vqe_reps": 3,
+    "qiskit_vqe_restarts": 4,
+    "qiskit_vqe_seed": 7,
+    "qiskit_vqe_maxiter": 1000,
+    "skip_qpe": true,
+    "initial_state_source": "vqe"
+  },
+  "results": [
+    {
+      "L": 2,
+      "pass": true,
+      "metrics_json": "artifacts/hva_uccsd_heavy/hva_uccsd_qiskit_L2_metrics.json",
+      "comparison_pdf": "artifacts/hva_uccsd_heavy/hva_uccsd_qiskit_L2_comparison.pdf",
+      "exact_filtered_energy": -0.8284271247461902,
+      "vqe_energy": {
+        "hva": -0.8284270647377743,
+        "hardcoded_uccsd": -0.8284271246665298,
+        "qiskit_uccsd": -0.8284270960159438
+      }
+    },
+    {
+      "L": 3,
+      "pass": true,
+      "metrics_json": "artifacts/hva_uccsd_heavy/hva_uccsd_qiskit_L3_metrics.json",
+      "comparison_pdf": "artifacts/hva_uccsd_heavy/hva_uccsd_qiskit_L3_comparison.pdf",
+      "exact_filtered_energy": -1.2749172176353751,
+      "vqe_energy": {
+        "hva": -1.2749171770448173,
+        "hardcoded_uccsd": -1.2749171580200909,
+        "qiskit_uccsd": -1.2749171651039366
+      }
+    }
+  ],
+  "all_pass": true
+}
