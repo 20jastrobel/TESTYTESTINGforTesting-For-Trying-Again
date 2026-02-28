@@ -1,0 +1,238 @@
+{
+  "config": {
+    "l_values": "3",
+    "physics_points": [
+      {
+        "g": 0.15,
+        "omega0": 0.4
+      }
+    ],
+    "physics_mode": "nonzero",
+    "main_boundary_orderings": "periodic:blocked",
+    "appendix_boundary_orderings": "",
+    "J": 1.0,
+    "U": 4.0,
+    "dv": 0.0,
+    "n_ph_max": 1,
+    "boson_encoding": "binary",
+    "include_zero_point": true,
+    "layerwise": {
+      "baseline": {
+        "reps": 1,
+        "restarts": 1,
+        "maxiter": 60
+      },
+      "heavy": {
+        "reps": 1,
+        "restarts": 1,
+        "maxiter": 1
+      }
+    },
+    "termwise": {
+      "baseline": {
+        "reps": 1,
+        "restarts": 1,
+        "maxiter": 40
+      },
+      "heavy": {
+        "reps": 1,
+        "restarts": 1,
+        "maxiter": 1
+      }
+    },
+    "seed": 7,
+    "tol_scale": 0.001,
+    "tol_floor": 0.001,
+    "heavy_skip_err_threshold": 1000000000.0,
+    "zero_limit_threshold": 1e-10
+  },
+  "summary": {
+    "generated_utc": "2026-02-28T00:13:36.219095+00:00",
+    "num_cases": 1,
+    "num_main_cases": 1,
+    "num_appendix_cases": 0,
+    "ansatz_summary": {
+      "termwise": {
+        "baseline_pass_count": 0,
+        "heavy_ran_count": 0,
+        "heavy_pass_count": 0,
+        "best_pass_count": 0,
+        "heavy_improved_count": 0,
+        "expressivity_suspected_count": 0,
+        "max_abs_err_best": 0.7194612735737085
+      },
+      "layerwise": {
+        "baseline_pass_count": 0,
+        "heavy_ran_count": 0,
+        "heavy_pass_count": 0,
+        "best_pass_count": 0,
+        "heavy_improved_count": 0,
+        "expressivity_suspected_count": 0,
+        "max_abs_err_best": 1.5843918545576015
+      }
+    },
+    "overall_max_abs_err_best": 1.5843918545576015,
+    "zero_limit_consistency": {
+      "num_cases": 0,
+      "pass_count": 0,
+      "fail_count": 0,
+      "max_delta_exact": NaN,
+      "threshold": 1e-10
+    }
+  },
+  "cases": [
+    {
+      "case_meta": {
+        "case_id": "L3_periodic_blocked_g0p15_w0p4",
+        "section": "main",
+        "L": 3,
+        "boundary": "periodic",
+        "ordering": "blocked",
+        "J": 1.0,
+        "U": 4.0,
+        "dv": 0.0,
+        "g": 0.15,
+        "omega0": 0.4,
+        "n_ph_max": 1,
+        "boson_encoding": "binary",
+        "num_particles": {
+          "n_up": 2,
+          "n_dn": 1
+        }
+      },
+      "hamiltonian": {
+        "num_terms": 31,
+        "num_qubits": 9
+      },
+      "exact": {
+        "hh_filtered": -0.6778751558497031,
+        "hubbard_embedded_filtered": null,
+        "delta_exact": null,
+        "zero_limit_consistency_pass": null,
+        "tol": 0.001
+      },
+      "results": {
+        "termwise": {
+          "baseline": {
+            "ran": true,
+            "stage": "baseline",
+            "ansatz": "termwise",
+            "reps": 1,
+            "restarts": 1,
+            "maxiter": 40,
+            "seed": 10007,
+            "tol": 0.001,
+            "num_params": 32,
+            "n_qubits": 9,
+            "success": false,
+            "message": "Iteration limit reached",
+            "energy": -1.3973364294234116,
+            "abs_err": 0.7194612735737085,
+            "pass": false,
+            "nfev": 1340,
+            "nit": 40,
+            "best_restart": 0,
+            "runtime_s": 47.022488083690405
+          },
+          "heavy": {
+            "ran": false,
+            "stage": "heavy",
+            "ansatz": "termwise",
+            "reps": 1,
+            "restarts": 1,
+            "maxiter": 1,
+            "seed": 100007,
+            "success": false,
+            "message": "baseline abs_err=7.195e-01 < heavy-skip threshold=1.000e+09",
+            "energy": null,
+            "abs_err": null,
+            "pass": false,
+            "nfev": 0,
+            "nit": 0,
+            "best_restart": -1,
+            "runtime_s": 0.0,
+            "num_params": null,
+            "n_qubits": null
+          },
+          "best": {
+            "stage": "baseline",
+            "energy": -1.3973364294234116,
+            "abs_err": 0.7194612735737085,
+            "pass": false,
+            "success": false,
+            "runtime_s": 47.022488083690405,
+            "num_params": 32
+          },
+          "heavy_decision_reason": "baseline abs_err=7.195e-01 < heavy-skip threshold=1.000e+09",
+          "depth_improvement": null,
+          "expressivity_suspected": false
+        },
+        "layerwise": {
+          "baseline": {
+            "ran": true,
+            "stage": "baseline",
+            "ansatz": "layerwise",
+            "reps": 1,
+            "restarts": 1,
+            "maxiter": 60,
+            "seed": 260007,
+            "tol": 0.001,
+            "num_params": 4,
+            "n_qubits": 9,
+            "success": true,
+            "message": "Optimization terminated successfully",
+            "energy": 0.9065166987078983,
+            "abs_err": 1.5843918545576015,
+            "pass": false,
+            "nfev": 50,
+            "nit": 9,
+            "best_restart": 0,
+            "runtime_s": 1.767585041001439
+          },
+          "heavy": {
+            "ran": false,
+            "stage": "heavy",
+            "ansatz": "layerwise",
+            "reps": 1,
+            "restarts": 1,
+            "maxiter": 1,
+            "seed": 350007,
+            "success": false,
+            "message": "baseline abs_err=1.584e+00 < heavy-skip threshold=1.000e+09",
+            "energy": null,
+            "abs_err": null,
+            "pass": false,
+            "nfev": 0,
+            "nit": 0,
+            "best_restart": -1,
+            "runtime_s": 0.0,
+            "num_params": null,
+            "n_qubits": null
+          },
+          "best": {
+            "stage": "baseline",
+            "energy": 0.9065166987078983,
+            "abs_err": 1.5843918545576015,
+            "pass": false,
+            "success": true,
+            "runtime_s": 1.767585041001439,
+            "num_params": 4
+          },
+          "heavy_decision_reason": "baseline abs_err=1.584e+00 < heavy-skip threshold=1.000e+09",
+          "depth_improvement": null,
+          "expressivity_suspected": false
+        }
+      },
+      "diagnostics": {
+        "depth_improvement": {
+          "termwise": null,
+          "layerwise": null
+        },
+        "expressivity_suspected": {
+          "termwise": false,
+          "layerwise": false
+        }
+      }
+    }
+  ]
+}

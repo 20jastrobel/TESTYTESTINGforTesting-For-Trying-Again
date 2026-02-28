@@ -1,0 +1,73 @@
+{
+  "generated_utc": "2026-02-25T03:59:34.286724+00:00",
+  "description": "Hardcoded ADAPT-VQE vs Qiskit ADAPT-VQE pipeline comparison.",
+  "l_values": [
+    3
+  ],
+  "thresholds": {
+    "ground_state_energy_abs_delta": 1e-08,
+    "fidelity_max_abs_delta": 0.0001,
+    "energy_trotter_max_abs_delta": 0.001,
+    "n_up_site0_trotter_max_abs_delta": 0.005,
+    "n_dn_site0_trotter_max_abs_delta": 0.005,
+    "doublon_trotter_max_abs_delta": 0.001
+  },
+  "requested_run_settings": {
+    "t": 1.0,
+    "u": 4.0,
+    "dv": 0.0,
+    "boundary": "periodic",
+    "ordering": "blocked",
+    "t_final": 20.0,
+    "num_times": 201,
+    "suzuki_order": 2,
+    "trotter_steps": 64,
+    "initial_state_source": "adapt_vqe"
+  },
+  "results": [
+    {
+      "L": 3,
+      "pass": false,
+      "metrics_json": "/Users/jakestrobel/Downloads/Holstein_test/Adapt-VQE-Pipeline/artifacts/hardcoded_vs_qiskit_adapt_L3_metrics.json",
+      "comparison_pdf": null,
+      "hardcoded_settings": {
+        "L": 3,
+        "t": 1.0,
+        "u": 4.0,
+        "dv": 0.0,
+        "boundary": "periodic",
+        "ordering": "blocked",
+        "t_final": 20.0,
+        "num_times": 201,
+        "suzuki_order": 2,
+        "trotter_steps": 64,
+        "term_order": "sorted",
+        "initial_state_source": "adapt_vqe"
+      },
+      "qiskit_settings": {
+        "L": 3,
+        "t": 1.0,
+        "u": 4.0,
+        "dv": 0.0,
+        "boundary": "periodic",
+        "ordering": "blocked",
+        "t_final": 20.0,
+        "num_times": 201,
+        "suzuki_order": 2,
+        "trotter_steps": 64,
+        "term_order": "sorted",
+        "initial_state_source": "adapt_vqe"
+      },
+      "ground_state_energy_abs_delta": 0.0,
+      "adapt_vqe_energy_delta": 3.002762018589067e-06,
+      "trajectory_max_abs_deltas": {
+        "fidelity": 0.0028472181418830456,
+        "energy_trotter": 0.00040448998847808504,
+        "n_up_site0_trotter": 0.001563395558948688,
+        "n_dn_site0_trotter": 0.0012600920797239956,
+        "doublon_trotter": 0.00029437047651986736
+      }
+    }
+  ],
+  "all_pass": false
+}

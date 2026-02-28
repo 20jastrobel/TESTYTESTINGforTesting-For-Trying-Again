@@ -1,0 +1,80 @@
+{
+  "generated_utc": "2026-02-25T03:59:34.286279+00:00",
+  "L": 3,
+  "hardcoded_json": "/Users/jakestrobel/Downloads/Holstein_test/Adapt-VQE-Pipeline/artifacts/hardcoded_adapt_pipeline_L3.json",
+  "qiskit_json": "/Users/jakestrobel/Downloads/Holstein_test/Adapt-VQE-Pipeline/artifacts/qiskit_adapt_pipeline_L3.json",
+  "metrics": {
+    "time_grid": {
+      "num_times": 201,
+      "t0": 0.0,
+      "t_final": 20.0,
+      "dt": 0.1
+    },
+    "trajectory_deltas": {
+      "fidelity": {
+        "max_abs_delta": 0.0028472181418830456,
+        "mean_abs_delta": 0.0004863150217258033,
+        "final_abs_delta": 0.0028472181418830456,
+        "first_time_abs_delta_gt_1e-4": 10.8,
+        "first_time_abs_delta_gt_1e-3": 16.2
+      },
+      "energy_trotter": {
+        "max_abs_delta": 0.00040448998847808504,
+        "mean_abs_delta": 8.782021618988957e-05,
+        "final_abs_delta": 0.00031480678318551725,
+        "first_time_abs_delta_gt_1e-4": 8.9,
+        "first_time_abs_delta_gt_1e-3": null
+      },
+      "n_up_site0_trotter": {
+        "max_abs_delta": 0.001563395558948688,
+        "mean_abs_delta": 0.0006754864255162744,
+        "final_abs_delta": 0.0015008393939485165,
+        "first_time_abs_delta_gt_1e-4": 0.0,
+        "first_time_abs_delta_gt_1e-3": 0.30000000000000004
+      },
+      "n_dn_site0_trotter": {
+        "max_abs_delta": 0.0012600920797239956,
+        "mean_abs_delta": 0.0005352107584712608,
+        "final_abs_delta": 0.0012287359904210593,
+        "first_time_abs_delta_gt_1e-4": 0.0,
+        "first_time_abs_delta_gt_1e-3": 4.800000000000001
+      },
+      "doublon_trotter": {
+        "max_abs_delta": 0.00029437047651986736,
+        "mean_abs_delta": 0.00011316375758190726,
+        "final_abs_delta": 0.00017030616756291694,
+        "first_time_abs_delta_gt_1e-4": 0.30000000000000004,
+        "first_time_abs_delta_gt_1e-3": null
+      }
+    },
+    "ground_state_energy": {
+      "hardcoded_exact_energy": -1.2749172176353751,
+      "qiskit_exact_energy": -1.2749172176353751,
+      "abs_delta": 0.0
+    },
+    "adapt_vqe_energy": {
+      "hardcoded_adapt_energy": -1.274917135559023,
+      "qiskit_adapt_energy": -1.2749141327970044,
+      "abs_delta": 3.002762018589067e-06
+    },
+    "acceptance": {
+      "thresholds": {
+        "ground_state_energy_abs_delta": 1e-08,
+        "fidelity_max_abs_delta": 0.0001,
+        "energy_trotter_max_abs_delta": 0.001,
+        "n_up_site0_trotter_max_abs_delta": 0.005,
+        "n_dn_site0_trotter_max_abs_delta": 0.005,
+        "doublon_trotter_max_abs_delta": 0.001
+      },
+      "checks": {
+        "ground_state_energy_abs_delta": true,
+        "fidelity_max_abs_delta": false,
+        "energy_trotter_max_abs_delta": true,
+        "n_up_site0_trotter_max_abs_delta": true,
+        "n_dn_site0_trotter_max_abs_delta": true,
+        "doublon_trotter_max_abs_delta": true
+      },
+      "pass": false
+    }
+  }
+}

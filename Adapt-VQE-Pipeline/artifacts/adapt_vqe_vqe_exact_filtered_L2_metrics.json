@@ -1,0 +1,56 @@
+{
+  "generated_utc": "2026-02-24T23:43:10.049516+00:00",
+  "L": 2,
+  "sources": {
+    "hardcoded_adapt_json": "/Users/jakestrobel/Downloads/Holstein_test/Adapt-VQE-Pipeline/artifacts/hardcoded_adapt_pipeline_L2.json",
+    "qiskit_adapt_json": "/Users/jakestrobel/Downloads/Holstein_test/Adapt-VQE-Pipeline/artifacts/qiskit_adapt_pipeline_L2.json",
+    "hardcoded_vqe_json": "/Users/jakestrobel/Downloads/Holstein_test/Adapt-VQE-Pipeline/artifacts/hardcoded_pipeline_L2.json",
+    "qiskit_vqe_json": "/Users/jakestrobel/Downloads/Holstein_test/Adapt-VQE-Pipeline/artifacts/qiskit_pipeline_L2.json"
+  },
+  "metrics": {
+    "energies": {
+      "hardcoded_adapt_vqe": 4.0,
+      "qiskit_adapt_vqe": -0.4999999754679674,
+      "hardcoded_vqe_uccsd": -0.8284271244738317,
+      "qiskit_vqe_uccsd": -0.8284271225858459,
+      "exact_filtered_reference": -0.8284271247461897,
+      "exact_filtered_source_qiskit_vqe": -0.8284271247461897,
+      "exact_filtered_source_qiskit_adapt": -0.8284271247461897
+    },
+    "deltas": {
+      "adapt_hc_vs_qk_abs_delta": 4.499999975467968,
+      "adapt_hc_vs_exact_filtered_abs_delta": 4.82842712474619,
+      "adapt_qk_vs_exact_filtered_abs_delta": 0.32842714927822236,
+      "adapt_hc_vs_vqe_hc_abs_delta": 4.828427124473832,
+      "adapt_hc_vs_vqe_qk_abs_delta": 4.828427122585846,
+      "adapt_qk_vs_vqe_hc_abs_delta": 0.32842714900586434,
+      "adapt_qk_vs_vqe_qk_abs_delta": 0.32842714711787857,
+      "vqe_hc_vs_qk_abs_delta": 1.8879857677234213e-09,
+      "vqe_hc_vs_exact_filtered_abs_delta": 2.7235802502190154e-10,
+      "vqe_qk_vs_exact_filtered_abs_delta": 2.160343792745323e-09,
+      "exact_filtered_cross_source_abs_delta": 0.0
+    },
+    "acceptance": {
+      "thresholds": {
+        "exact_filtered_cross_source_abs_delta": 1e-08,
+        "adapt_hc_vs_qk_abs_delta": 1.0,
+        "adapt_hc_vs_exact_filtered_abs_delta": 1.0,
+        "adapt_qk_vs_exact_filtered_abs_delta": 1.0,
+        "vqe_hc_vs_qk_abs_delta": 1.0,
+        "vqe_hc_vs_exact_filtered_abs_delta": 1.0,
+        "vqe_qk_vs_exact_filtered_abs_delta": 1.0
+      },
+      "checks": {
+        "finite_energies": true,
+        "adapt_hc_vs_qk_abs_delta": false,
+        "adapt_hc_vs_exact_filtered_abs_delta": false,
+        "adapt_qk_vs_exact_filtered_abs_delta": true,
+        "vqe_hc_vs_qk_abs_delta": true,
+        "vqe_hc_vs_exact_filtered_abs_delta": true,
+        "vqe_qk_vs_exact_filtered_abs_delta": true,
+        "exact_filtered_cross_source_abs_delta": true
+      },
+      "pass": false
+    }
+  }
+}
